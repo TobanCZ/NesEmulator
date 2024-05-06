@@ -13,26 +13,30 @@ public:
 	void connectBus(Bus* ptr);
 
 public:
-	enum FLAGS
+	enum Flags
 	{
-		C = (1 << 0),	//Carry
-		Z = (1 << 1),	//Zero
-		I = (1 << 2),	//Disable Interrupts
-		B = (1 << 3),	//Break
-		U = (1 << 4),	//Unused
-		V = (1 << 5),	//Overflow
-		N = (1 << 6),	//Negative
+		C = 0,	//Carry
+		Z = 1,	//Zero
+		I = 2,	//Disable Interrupts
+		D = 3,	//Decimal
+		B = 4,	//Break
+		U = 5,	//Unused
+		V = 6,	//Overflow
+		N = 7,	//Negative
 	};
-	uint8_t status = 0x00; //status
 
 	uint8_t rA = 0x00;  //register Accumulator
 	uint8_t rX = 0x00;  //register X
 	uint8_t rY = 0x00;	//register Y
-	uint8_t rS = 0x00;	//register status
+	uint8_t status = 0x00;	//register status
 
 	uint16_t pc = 0x0000;	//program counter
 	uint8_t sp = 0x00;		//stack pointer
 
+
+	uint8_t fetched = 0x00; //data se kteryma se pracuej
+	uint16_t adress = 0x00; //adressa se kteryma se pracuje
+	int8_t adressRel = 0x00; //branch relativni
 
 private:
 	//address modes
@@ -123,8 +127,10 @@ private:
 	void write(uint16_t address, uint8_t data);
 	uint8_t read(uint16_t address);
 
-	void writeFlag(FLAGS f, bool v);
-	uint8_t readFlag(FLAGS f);
+	void setFlag(Flags flag, bool state);
+	bool getFlag(Flags flag);
+
+	void fetch();
 
 private:
 	Bus* bus = nullptr;
