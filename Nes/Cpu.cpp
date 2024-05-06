@@ -58,14 +58,14 @@ uint8_t Cpu::IMP()
 }
 uint8_t Cpu::ACC()
 {
-	fetched = rA;
+	data = rA;
 	return 0;
 }
 uint8_t Cpu::IMM()
 {
 	pc++;
-	fetched = read(pc);
-	adress = pc;
+	data = read(pc);
+	address = pc;
 	return 0;
 }
 uint8_t Cpu::ABS()
@@ -76,8 +76,8 @@ uint8_t Cpu::ABS()
 	uint16_t high = read(pc);
 
 	uint16_t addr = (high << 8) | low;
-	fetched = read(addr);
-	adress = addr;
+	data = read(addr);
+	address = addr;
 	return 0;
 }
 uint8_t Cpu::XABS()
@@ -88,8 +88,8 @@ uint8_t Cpu::XABS()
 	uint16_t high = read(pc);
 
 	uint16_t addr = ((high << 8) | low) + rX;
-	fetched = read(addr);
-	adress = addr;
+	data = read(addr);
+	address = addr;
 
 	if (high != (addr >> 8)) //tady si nejsem jisty
 		return 1;
@@ -104,8 +104,8 @@ uint8_t Cpu::YABS()
 	uint8_t high = read(pc);
 
 	uint16_t addr = ((high << 8) | low) + rY;
-	fetched = read(addr);
-	adress = addr;
+	data = read(addr);
+	address = addr;
 
 	if (high != (addr >> 8)) //tady si nejsem jisty
 		return 1;
@@ -123,65 +123,65 @@ uint8_t Cpu::ABSI()
 
 	addr = (read(addr + 1) << 8) | read(addr);
 
-	fetched = read(addr); //tady si taky nejsem jisty
-	adress = addr;
+	data = read(addr); //tady si taky nejsem jisty
+	address = addr;
 
 	return 0;
 }
 uint8_t Cpu::ZP()
 {
 	pc++;
-	uint8_t adrr = read(pc);
-	adrr = 0x00FF & adrr;
-	fetched = read(adrr);
-	adress = adrr;
+	uint8_t addr = read(pc);
+	addr = 0x00FF & addr;
+	data = read(addr);
+	address = addr;
 	return 0;
 }
 uint8_t Cpu::XZP()
 {
 	pc++;
-	uint8_t adrr = read(pc);
-	adrr = 0x00FF & (adrr + rX);
-	fetched = read(adrr);
-	adress = adrr;
+	uint8_t addr = read(pc);
+	addr = 0x00FF & (addr + rX);
+	data = read(addr);
+	address = addr;
 	return 0;
 }
 uint8_t Cpu::YZP()
 {
 	pc++;
-	uint8_t adrr = read(pc);
-	adrr = 0x00FF & (adrr + rY);
-	fetched = read(adrr);
-	adress = adrr;
+	uint8_t addr = read(pc);
+	addr = 0x00FF & (addr + rY);
+	data = read(addr);
+	address = addr;
 	return 0;
 }
 uint8_t Cpu::XZPI() //X-Indexed Zero Page Indirect
 {
 	pc++;
-	uint8_t adrr = read(pc);
+	uint8_t addr = read(pc);
 
-	uint8_t low = read((adrr + rX) & 0x00FF);
-	uint8_t high = read((adrr + rX + 1) & 0x00FF);
+	uint8_t low = read((addr + rX) & 0x00FF);
+	uint8_t high = read((addr + rX + 1) & 0x00FF);
 
-	adrr = (high << 8) | low;
-	fetched = read(adrr);
-	adress = adrr;
+	addr = (high << 8) | low;
+	data = read(addr);
+	address = addr;
 
 	return 0;
 }
 uint8_t Cpu::YZPI() //Zero Page Indirect Y-Indexed
 {
 	pc++;
-	uint8_t adrr = read(pc);
+	uint8_t addr = read(pc);
 
-	uint8_t low = read(adrr & 0x00FF);
-	uint8_t high = read((adrr + 1) & 0x00FF);
+	uint8_t low = read(addr & 0x00FF);
+	uint8_t high = read((addr + 1) & 0x00FF);
 
-	adrr = (high << 8) | low;
-	fetched = read(adrr) + rY;
-	adress = adrr;
+	addr = (high << 8) | low;
+	data = read(addr) + rY;
+	address = addr;
 
-	if (high != (fetched >> 8)) //tady si nejsem jisty
+	if (high != (data >> 8)) //tady si nejsem jisty
 		return 1;
 
 	return 0;
@@ -189,7 +189,7 @@ uint8_t Cpu::YZPI() //Zero Page Indirect Y-Indexed
 uint8_t Cpu::REL()
 {
 	pc++;	
-	adressRel = read(pc);
+	addressRel = read(pc);
 
 	return 0;
 }
@@ -200,7 +200,7 @@ uint8_t Cpu::REL()
 //Load
 uint8_t Cpu::LDA()
 {
-	rA = fetched;
+	rA = data;
 
 	setFlag(Z,(rA == 0x00));
 	setFlag(N,(rA & 0x80));
@@ -209,7 +209,7 @@ uint8_t Cpu::LDA()
 }
 uint8_t Cpu::LDX()
 {
-	rX = fetched;
+	rX = data;
 
 	setFlag(Z, (rX == 0x00));
 	setFlag(N, (rX & 0x80));
@@ -218,7 +218,7 @@ uint8_t Cpu::LDX()
 }
 uint8_t Cpu::LDY()
 {
-	rY = fetched;
+	rY = data;
 
 	setFlag(Z, (rY == 0x00));
 	setFlag(N, (rY & 0x80));
@@ -227,17 +227,17 @@ uint8_t Cpu::LDY()
 }
 uint8_t Cpu::STA()
 {
-	write(adress, rA);
+	write(address, rA);
 	return 0;
 }
 uint8_t Cpu::STX()
 {
-	write(adress, rX);
+	write(address, rX);
 	return 0;
 }
 uint8_t Cpu::STY()
 {
-	write(adress, rY);
+	write(address, rY);
 	return 0;
 }
 //Trans

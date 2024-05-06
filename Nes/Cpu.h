@@ -34,9 +34,9 @@ public:
 	uint8_t sp = 0x00;		//stack pointer
 
 
-	uint8_t fetched = 0x00; //data se kteryma se pracuej
-	uint16_t adress = 0x00; //adressa se kteryma se pracuje
-	int8_t adressRel = 0x00; //branch relativni
+	uint8_t data = 0x00; //data se kteryma se pracuej
+	uint16_t address = 0x00; //adressa se kteryma se pracuje
+	int8_t addressRel = 0x00; //branch relativni
 
 private:
 	//address modes
@@ -130,7 +130,6 @@ private:
 	void setFlag(Flags flag, bool state);
 	bool getFlag(Flags flag);
 
-	void fetch();
 
 private:
 	Bus* bus = nullptr;
