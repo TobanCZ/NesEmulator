@@ -195,7 +195,6 @@ uint8_t Cpu::REL()
 }
 
 
-
 //instructions
 //Load
 uint8_t Cpu::LDA()
@@ -243,98 +242,198 @@ uint8_t Cpu::STY()
 //Trans
 uint8_t Cpu::TAX()
 {
+	rX = rA;
+	setFlag(Z, (rX == 0x00));
+	setFlag(N, (rX & 0x80));
 	return 0;
 }
 uint8_t Cpu::TAY()
 {
+	rY = rA;
+	setFlag(Z, (rY == 0x00));
+	setFlag(N, (rY & 0x80));
 	return 0;
 }
 uint8_t Cpu::TSX()
 {
+	rX = sp;
+	setFlag(Z, (rX == 0x00));
+	setFlag(N, (rX & 0x80));
 	return 0;
 }
 uint8_t Cpu::TXA()
 {
+	rA = rX;
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 uint8_t Cpu::TXS()
 {
+	sp = rX;
 	return 0;
 }
 uint8_t Cpu::TYA()
 {
+	rA = rY;
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 //Stacks
 uint8_t Cpu::PHA()
 {
+	write(0x0100 + sp, rA);
+	sp--;
 	return 0;
 }
 uint8_t Cpu::PHP()
 {
+	write(0x0100 + sp, status);
+	sp--;
 	return 0;
 }
 uint8_t Cpu::PLA()
 {
+	sp++;
+	rA = read(0x0100 + sp);
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 uint8_t Cpu::PLP()
 {
+	sp++;
+	status = read(0x0100 + sp);
 	return 0;
 }
 //Shift
 uint8_t Cpu::ASL()
 {
+	uint8_t carry = data & 0x80;
+	uint8_t shift = data << 1;
+	setFlag(C, carry > 0);
+	setFlag(Z, (shift == 0x00));
+	setFlag(N, (shift & 0x80));
+	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
+		rA = shift;
+	else
+		write(address, shift);
 	return 0;
 }
 uint8_t Cpu::LSR()
 {
+	uint8_t carry = data & 0x01;
+	uint8_t shift = data >> 1;
+	setFlag(C, carry > 0);
+	setFlag(Z, (shift == 0x00));
+	setFlag(N, (shift & 0x80));
+	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
+		rA = shift;
+	else
+		write(address, shift);
 	return 0;
 }
 uint8_t Cpu::ROL()
 {
+	uint8_t carry = data & 0x80;
+	uint8_t shift = data << 1;
+	shift |= getFlag(C);
+	setFlag(C, carry > 0);
+	setFlag(Z, (shift == 0x00));
+	setFlag(N, (shift & 0x80));
+	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
+		rA = shift;
+	else
+		write(address, shift);
 	return 0;
 }
 uint8_t Cpu::ROR()
 {
+	uint8_t carry = data & 0x01;
+	uint8_t shift = data >> 1;
+	shift |= getFlag(C) << 7;
+	setFlag(C, carry > 0);
+	setFlag(Z, (shift == 0x00));
+	setFlag(N, (shift & 0x80));
+	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
+		rA = shift;
+	else
+		write(address, shift);
 	return 0;
 }
 //logic
 uint8_t Cpu::AND()
 {
+	rA &= data;
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 uint8_t Cpu::BIT()
 {
+	setFlag(Z, ((rA & data) == 0x00));
+	setFlag(N, data & (1 << 7));
+	setFlag(V, data & (1 << 6));
 	return 0;
 }
 uint8_t Cpu::EOR()
 {
+	rA ^= data;
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 uint8_t Cpu::ORA()
 {
+	rA |= data;
+	setFlag(Z, (rA == 0x00));
+	setFlag(N, (rA & 0x80));
 	return 0;
 }
 //arithmetic
 uint8_t Cpu::ADC()
 {
+	uint16_t result = rA + data + getFlag(C);
+	setFlag(C, (result > 255) || (getFlag(D) && result > 99));
+	setFlag(V, (~(rA ^ data) & (rA ^ result)) & 0x0080);
+	setFlag(Z, ((result & 0x00FF) == 0x00));
+	setFlag(N, (result & 0x80));
+	rA = result & 0x00FF;
 	return 0;
 }
 uint8_t Cpu::CMP()
 {
+	uint16_t result = rA - data;
+	setFlag(C, data <= rA);
+	setFlag(Z, ((result & 0x00FF) == 0x00));
+	setFlag(N, (result & 0x80));
 	return 0;
 }
 uint8_t Cpu::CPX()
 {
+	uint16_t result = rX - data;
+	setFlag(C, data <= rX);
+	setFlag(Z, ((result & 0x00FF) == 0x00));
+	setFlag(N, (result & 0x80));
 	return 0;
 }
 uint8_t Cpu::CPY()
 {
+	uint16_t result = rY - data;
+	setFlag(C, data <= rY);
+	setFlag(Z, ((result & 0x00FF) == 0x00));
+	setFlag(N, (result & 0x80));
 	return 0;
 }
 uint8_t Cpu::SBC()
 {
+	uint16_t result = rA + ~data + getFlag(C);
+	setFlag(C, (result > 255) || (getFlag(D) && result > 99));
+	setFlag(V, (~(rA ^ ~data) & (rA ^ result)) & 0x0080);
+	setFlag(Z, ((result & 0x00FF) == 0x00));
+	setFlag(N, (result & 0x80));
+	rA = result & 0x00FF;
 	return 0;
 }
 //Inc
