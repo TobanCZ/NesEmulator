@@ -1,8 +1,9 @@
 #pragma once
 #include <cstdint>
-#include "Bus.h"
 #include <string>
 #include <vector>
+
+class Bus;
 
 class Cpu
 {
@@ -10,7 +11,7 @@ public:
 	Cpu();
 
 public:
-	void connectBus(Bus* ptr);
+	void connectBus(Bus *ptr);
 
 public:
 	enum Flags
@@ -36,6 +37,15 @@ public:
 	uint8_t data = 0x00; //data se kteryma se pracuej
 	uint16_t address = 0x00; //adressa se kteryma se pracuje
 	int8_t addressRel = 0x00; //branch relativni
+
+	uint8_t cycles = 0;
+
+	bool complete();
+
+	void reset();
+	void irq();	
+	void nmi();
+	void clock();
 
 private:
 	//address modes
@@ -131,8 +141,7 @@ private:
 
 
 private:
-	Bus* bus = nullptr;
-
+	 Bus* bus = nullptr;
 
 
 	struct OPCODE

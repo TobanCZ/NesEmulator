@@ -13,7 +13,7 @@ Cpu::Cpu()
 		{&Cpu::RTS,&Cpu::IMP,6},{&Cpu::ADC,&Cpu::XZPI,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ADC,&Cpu::ZP,3}, {&Cpu::ROR,&Cpu::ZP,5}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::PLA,&Cpu::IMP,4},{&Cpu::ADC,&Cpu::IMM,2},{&Cpu::ROR,&Cpu::ACC,2}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::JMP,&Cpu::ABSI,5},{&Cpu::ADC,&Cpu::ABS,4}, {&Cpu::ROR,&Cpu::ABS,6}, {&Cpu::ERR,&Cpu::ERR,0},
 		{&Cpu::BVS,&Cpu::REL,2},{&Cpu::ADC,&Cpu::YZPI,5},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ADC,&Cpu::XZP,4},{&Cpu::ROR,&Cpu::XZP,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::SEI,&Cpu::IMP,2},{&Cpu::ADC,&Cpu::YABS,4},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0}, {&Cpu::ADC,&Cpu::XABS,4},{&Cpu::ROR,&Cpu::XABS,7},{&Cpu::ERR,&Cpu::ERR,0},
 		{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::STA,&Cpu::XZPI,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::STY,&Cpu::ZP,3}, {&Cpu::STA,&Cpu::ZP,3}, {&Cpu::STX,&Cpu::ZP,3}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::DEY,&Cpu::IMP,2},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::TXA,&Cpu::IMP,2}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::STY,&Cpu::ABS,4}, {&Cpu::STA,&Cpu::ABS,4}, {&Cpu::STX,&Cpu::ABS,4}, {&Cpu::ERR,&Cpu::ERR,0},
-		{&Cpu::BCC,Cpu::REL,2} ,{&Cpu::STA,&Cpu::YZPI,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::STY,&Cpu::XZP,4},{&Cpu::STA,&Cpu::XZP,4},{&Cpu::STX,&Cpu::YZP,4},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::TYA,&Cpu::IMP,2},{&Cpu::STA,&Cpu::YABS,5},{&Cpu::TXS,&Cpu::IMP,2},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0}, {&Cpu::STA,&Cpu::XABS,5},{&Cpu::ERR,&Cpu::ERR,0}, {&Cpu::ERR,&Cpu::ERR,0},
+		{&Cpu::BCC,&Cpu::REL,2} ,{&Cpu::STA,&Cpu::YZPI,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::STY,&Cpu::XZP,4},{&Cpu::STA,&Cpu::XZP,4},{&Cpu::STX,&Cpu::YZP,4},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::TYA,&Cpu::IMP,2},{&Cpu::STA,&Cpu::YABS,5},{&Cpu::TXS,&Cpu::IMP,2},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0}, {&Cpu::STA,&Cpu::XABS,5},{&Cpu::ERR,&Cpu::ERR,0}, {&Cpu::ERR,&Cpu::ERR,0},
 		{&Cpu::LDY,&Cpu::IMM,2},{&Cpu::LDA,&Cpu::XZPI,6},{&Cpu::LDX,&Cpu::IMM,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::LDY,&Cpu::ZP,3}, {&Cpu::LDA,&Cpu::ZP,3}, {&Cpu::LDX,&Cpu::ZP,3}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::TAY,&Cpu::IMP,2},{&Cpu::LDA,&Cpu::IMM,2},{&Cpu::TAX,&Cpu::IMP,2}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::LDY,&Cpu::ABS,4}, {&Cpu::LDA,&Cpu::ABS,4}, {&Cpu::LDX,&Cpu::ABS,4}, {&Cpu::ERR,&Cpu::ERR,0},
 		{&Cpu::BCS,&Cpu::REL,2},{&Cpu::LDA,&Cpu::YZPI,5},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::LDY,&Cpu::XZP,4},{&Cpu::LDA,&Cpu::XZP,4},{&Cpu::LDX,&Cpu::YZP,4},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::CLV,&Cpu::IMP,2},{&Cpu::LDA,&Cpu::YABS,4},{&Cpu::TSX,&Cpu::IMP,2},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::LDY,&Cpu::XABS,4},{&Cpu::LDA,&Cpu::XABS,4},{&Cpu::LDX,&Cpu::YABS,4},{&Cpu::ERR,&Cpu::ERR,0},
 		{&Cpu::CPY,&Cpu::IMM,2},{&Cpu::CMP,&Cpu::XZPI,6},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::ERR,&Cpu::ERR,0},{&Cpu::CPY,&Cpu::ZP,3}, {&Cpu::CMP,&Cpu::ZP,3}, {&Cpu::DEC,&Cpu::ZP,5}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::INY,&Cpu::IMP,2},{&Cpu::CMP,&Cpu::IMM,2},{&Cpu::DEX,&Cpu::IMP,2}, {&Cpu::ERR,&Cpu::ERR,0},{&Cpu::CPY,&Cpu::ABS,4}, {&Cpu::CMP,&Cpu::ABS,4}, {&Cpu::DEC,&Cpu::ABS,6}, {&Cpu::ERR,&Cpu::ERR,0},
@@ -23,7 +23,7 @@ Cpu::Cpu()
 	};
 }
 
-void Cpu::connectBus(Bus* ptr)
+void Cpu::connectBus(Bus *ptr)
 {
 	bus = ptr; 
 }
@@ -49,6 +49,90 @@ void Cpu::setFlag(Flags flag, bool state)
 bool Cpu::getFlag(Flags flag)
 {
 	return (status >> flag) & 0x01;
+}
+
+bool Cpu::complete()
+{
+	return cycles == 0;
+}
+
+void Cpu::clock()
+{
+	if (cycles == 0)
+	{
+		currentOpcode = read(pc);
+		setFlag(U, 1);
+		pc++;
+		cycles = opcodes[currentOpcode].cycles;
+		cycles += (this->*opcodes[currentOpcode].addressMode)();
+		cycles += (this->*opcodes[currentOpcode].instruction)();
+	}
+	else
+	{
+		cycles--;
+	}
+}
+
+void Cpu::reset()
+{
+	rA = 0;
+	rX = 0;
+	rY = 0;
+	status = 0;
+	sp = 0xFD;
+	address = 0;
+	addressRel = 0;
+	data = 0;
+
+	uint16_t low = read(0xFFFC);
+	uint16_t high = read(0xFFFC + 1);
+
+	pc = (high << 8) | low;
+
+	cycles = 8;
+}
+
+void Cpu::irq()
+{
+	if (getFlag(I) == 0)
+	{
+		write(0x0100 + sp, pc & 0xFF00);
+		sp--;
+		write(0x0100 + sp, pc & 0x00FF);
+		sp--;
+
+		setFlag(B, 0);
+		setFlag(U, 1);
+		setFlag(I, 1);
+		write(0x0100 + sp, status);
+		sp--;
+
+		uint16_t low = read(0xFFFE);
+		uint16_t high = read(0xFFFE + 1);
+		pc = (high << 8) | low;
+
+		cycles = 7;
+	}
+}
+
+void Cpu::nmi()
+{
+	write(0x0100 + sp, pc & 0xFF00);
+	sp--;
+	write(0x0100 + sp, pc & 0x00FF);
+	sp--;
+
+	setFlag(B, 0);
+	setFlag(U, 1);
+	setFlag(I, 1);
+	write(0x0100 + sp, status);
+	sp--;
+
+	uint16_t low = read(0xFFFA);
+	uint16_t high = read(0xFFFA + 1);
+	pc = (high << 8) | low;
+
+	cycles = 7;
 }
 
 //address modes
@@ -181,7 +265,7 @@ uint8_t Cpu::YZPI() //Zero Page Indirect Y-Indexed
 	data = read(addr) + rY;
 	address = addr;
 
-	if (high != (data >> 8)) //tady si nejsem jisty
+	if (high != (uint16_t)(data >> 8)) //tady si nejsem jisty
 		return 1;
 
 	return 0;
@@ -439,109 +523,214 @@ uint8_t Cpu::SBC()
 //Inc
 uint8_t Cpu::DEC()
 {
+	uint8_t result = data - 1;
+	write(address, result);
+	setFlag(Z, (result == 0x00));
+	setFlag(N, (result & 0x80));
 	return 0;
 }
 uint8_t Cpu::DEX()
 {
+	rX--;
+	setFlag(Z, (rX == 0x00));
+	setFlag(N, (rX & 0x80));
 	return 0;
 }
 uint8_t Cpu::DEY()
 {
+	rY--;
+	setFlag(Z, (rY == 0x00));
+	setFlag(N, (rY & 0x80));
 	return 0;
 }
 uint8_t Cpu::INC()
 {
+	uint8_t result = data + 1;
+	write(address, result);
+	setFlag(Z, (result == 0x00));
+	setFlag(N, (result & 0x80));
 	return 0;
 }
 uint8_t Cpu::INX()
 {
+	rX++;
+	setFlag(Z, (rX == 0x00));
+	setFlag(N, (rX & 0x80));
 	return 0;
 }
 uint8_t Cpu::INY()
 {
+	rY++;
+	setFlag(Z, (rY == 0x00));
+	setFlag(N, (rY & 0x80));
 	return 0;
 }
 //Ctrl
 uint8_t Cpu::BRK()
 {
+	setFlag(I, 1);
+	write(0x0100 + sp, pc & 0xFF00);
+	sp--;
+	write(0x0100 + sp, pc & 0x00FF);
+	sp--;
+	setFlag(B, 1);
+	write(0x0100 + sp, status);
+	setFlag(B, 0);
+	sp--;
+
+	pc++;
+
+	pc = read(0xFFFE) | (read(0xFFFF) << 8);
 	return 0;
 }
 uint8_t Cpu::JMP()
 {
+	pc = address;
 	return 0;
 }
 uint8_t Cpu::JSR()
 {
+
+	write(0x0100 + sp, (pc >> 8) & 0x00FF);
+	sp--;
+	write(0x0100 + sp, pc & 0x00FF);
+	sp--;
+
+	pc = address;
 	return 0;
 }
 uint8_t Cpu::RTI()
 {
+	sp++;
+	status = read(0x0100 + sp);
+
+
+	sp++;
+	uint8_t low = read(0x0100 + sp);
+	sp++;
+	uint8_t high = read(0x0100 + sp);
+
+	pc = (high << 8) | low;
 	return 0;
 }
 uint8_t Cpu::RTS()
 {
+	sp++;
+	uint8_t low = read(0x0100 + sp);
+	sp++;
+	uint8_t high = read(0x0100 + sp);
+
+	pc = (high << 8) | low;
+	pc++;
 	return 0;
 }
 //Bra
 uint8_t Cpu::BCC()
 {
+	if (!getFlag(C))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BCS()
 {
+	if (getFlag(C))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BEQ()
 {
+	if (getFlag(Z))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BMI()
 {
+	if (getFlag(N))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BNE()
 {
+	if (!getFlag(Z))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BPL()
 {
+	if (!getFlag(N))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BVC()
 {
+	if (!getFlag(V))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 uint8_t Cpu::BVS()
 {
+	if (getFlag(V))
+	{
+		pc = addressRel + pc;
+		return 1;
+	}
 	return 0;
 }
 //Flags
 uint8_t Cpu::CLC()
 {
+	setFlag(C, false);
 	return 0;
 }
 uint8_t Cpu::CLD()
 {
+	setFlag(D, false);
 	return 0;
 }
 uint8_t Cpu::CLI()
 {
+	setFlag(I, false);
 	return 0;
 }
 uint8_t Cpu::CLV()
 {
+	setFlag(V, false);
 	return 0;
 }
 uint8_t Cpu::SEC()
 {
+	setFlag(C, true);
 	return 0;
 }
 uint8_t Cpu::SED()
 {
+	setFlag(D, true);
 	return 0;
 }
 uint8_t Cpu::SEI()
 {
+	setFlag(I, true);
 	return 0;
 }
 //Error
