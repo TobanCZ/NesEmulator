@@ -43,7 +43,7 @@ void Cpu::setFlag(Flags flag, bool state)
 	if (state)
 		status |= (1 << flag); 
 	else
-		status &= (0 << flag);
+		status &= ~(1 << flag);
 }
 
 bool Cpu::getFlag(Flags flag)
@@ -62,10 +62,10 @@ void Cpu::clock()
 	{
 		currentOpcode = read(pc);
 		setFlag(U, 1);
-		pc++;
 		cycles = opcodes[currentOpcode].cycles;
 		cycles += (this->*opcodes[currentOpcode].addressMode)();
 		cycles += (this->*opcodes[currentOpcode].instruction)();
+		pc++;
 	}
 	else
 	{
@@ -150,7 +150,7 @@ uint8_t Cpu::IMM()
 	pc++;
 	data = read(pc);
 	address = pc;
-	return 0;
+	return 0; 
 }
 uint8_t Cpu::ABS()
 {

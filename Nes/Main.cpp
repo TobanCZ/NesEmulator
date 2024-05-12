@@ -83,32 +83,33 @@ int WINAPI idk()
 
 int main()
 {
-    idk();
-	//Bus nes;
+    /*idk();*/
+	Bus nes;
 
-	//std::stringstream ss;
-	//ss << "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA";
-	//uint16_t nOffset = 0x8000;
-	//while (!ss.eof())
-	//{
-	//	std::string b;
-	//	ss >> b;
-	//	nes.ram[nOffset++] = (uint8_t)std::stoul(b, nullptr, 16);
-	//}
+	std::stringstream ss;
+	ss << "A2 0A 8E 00 00 A2 03 8E 01 00 AC 00 00 A9 00 18 6D 01 00 88 D0 FA 8D 02 00 EA EA EA";
+	uint16_t nOffset = 0x8000;
+	while (!ss.eof())
+	{
+		std::string b;
+		ss >> b;
+		nes.ram[nOffset++] = (uint8_t)std::stoul(b, nullptr, 16);
+	}
 
-	//// Set Reset Vector
-	//nes.ram[0xFFFC] = 0x00;
-	//nes.ram[0xFFFD] = 0x80;
+	// Set Reset Vector
+	nes.ram[0xFFFC] = 0x00;
+	nes.ram[0xFFFD] = 0x80;
 
-	//nes.cpu.reset();
+	nes.cpu.reset();
 
-	//	for (int i = 0; i < 5; i++)
-	//	{
-	//		do
-	//		{
-	//			nes.cpu.clock();
-	//			std::cout << (uint16_t)nes.cpu.rX;
-	//		} while (!nes.cpu.complete());
-	//	}
-	//return 0;
+		for (int i = 0; i < 1000; i++)
+		{
+            std::cout << (uint16_t)nes.cpu.rA;
+			do
+			{
+				nes.cpu.clock();
+				
+			} while (!nes.cpu.complete());
+		}
+	return 0;
 }
