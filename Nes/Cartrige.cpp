@@ -25,23 +25,30 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
         ifs.read((char*)mCHR.data(), mCHR.size());
     }
 
+    switch (mapperId)
+    {
+    case 0:mapper = &Mapper_000(PRGbanks,CHRbanks);
+    }
+
     ifs.close();
 }
 
 void Cartrige::CpuWrite(uint16_t address, uint8_t data)
 {
+    mPRG[mapper->CpuWrite(address)] = data;
 }
 
-uint8_t Cartrige::CpuRead(uint16_t address, bool readOnly)
+uint8_t Cartrige::CpuRead(uint16_t address)
 {
-    return 0;
+    return mPRG[mapper->CpuRead(address)];
 }
 
 void Cartrige::PpuWrite(uint16_t address, uint8_t data)
 {
+    mCHR[mapper->PpuWrite(address)] = data;
 }
 
-uint8_t Cartrige::PpuRead(uint16_t address, bool readOnly)
+uint8_t Cartrige::PpuRead(uint16_t address)
 {
-    return 0;
+    return mCHR[mapper->PpuRead(address)];
 }

@@ -4,6 +4,8 @@
 #include <string>
 #include <array>
 
+#include "Mapper_000.h"
+
 class Cartrige
 {
 public:
@@ -34,12 +36,13 @@ private:
 	uint8_t PRGbanks = 0;
 	uint8_t CHRbanks = 0;
 
+	Mapper* mapper;
 
 public:
 	void CpuWrite(uint16_t address, uint8_t data);
-	uint8_t CpuRead(uint16_t address, bool readOnly = false);
+	uint8_t CpuRead(uint16_t address);
 
 	void PpuWrite(uint16_t address, uint8_t data);
-	uint8_t PpuRead(uint16_t address, bool readOnly = false);
+	uint8_t PpuRead(uint16_t address);
 };
 
