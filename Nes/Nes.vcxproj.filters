@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Zdrojové soubory\Mappers">
+      <UniqueIdentifier>{640594db-d26b-4eaf-9d04-83cce8e2cf4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hlavičkové soubory\Mappers">
+      <UniqueIdentifier>{8df180ce-711c-4ba1-984c-ccf9b01a5d38}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -30,10 +36,16 @@
     <ClCompile Include="Cartrige.cpp">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Zdrojové soubory</Filter>
+    </ClCompile>
     <ClCompile Include="Mapper.cpp">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
     <ClCompile Include="Mapper_000.cpp">
+      <Filter>Zdrojové soubory\Mappers</Filter>
+    </ClCompile>
+    <ClCompile Include="glad.c">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,7 +66,13 @@
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
     <ClInclude Include="Mapper_000.h">
+      <Filter>Hlavičkové soubory\Mappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="glfw3.dll" />
   </ItemGroup>
 </Project>
