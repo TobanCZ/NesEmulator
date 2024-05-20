@@ -30,12 +30,12 @@ void Cpu::connectBus(Bus *ptr)
 
 void Cpu::write(uint16_t address, uint8_t data)
 {
-	bus->write(address, data);
+	bus->CpuWrite(address, data);
 }
 
 uint8_t Cpu::read(uint16_t address)
 {
-	return bus->read(address);
+	return bus->CpuRead(address);
 }
 
 void Cpu::setFlag(Flags flag, bool state)

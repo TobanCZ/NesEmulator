@@ -1,20 +1,32 @@
 #pragma once
 #include <cstdint>
-#include "Cpu.h"
 #include <array>
-
+#include "Cpu.h"
+#include "Ppu.h"
+#include "Cartrige.h"
 
 class Bus
 {
 public:
 	Bus();
+	~Bus();
 
-public: //pripojene zarizeni
+public: 
 	Cpu cpu;
-	std::array<uint8_t, 64 * 1024> ram;
+	Ppu ppu;
+	Cartrige cartrige;
+	std::array<uint8_t, 2 * 1024> ram;
 
 public: //funkce
-	void write(uint16_t address, uint8_t data);
-	uint8_t read(uint16_t address, bool readOnly = false);
+	void CpuWrite(uint16_t address, uint8_t data);
+	uint8_t CpuRead(uint16_t address, bool readOnly = false);
+
+public: //system
+	void insertCartrige(const Cartrige& cartrige);
+	void reset();
+	void clock();
+
+private:
+	uint32_t clockCount;
 };
 

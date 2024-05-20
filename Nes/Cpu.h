@@ -9,6 +9,7 @@ class Cpu
 {
 public:
 	Cpu();
+	~Cpu();
 
 public:
 	void connectBus(Bus *ptr);
