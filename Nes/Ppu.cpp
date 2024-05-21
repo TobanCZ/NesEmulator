@@ -1,6 +1,7 @@
 #include "Ppu.h"
 #include <cstdint>
 #include "Cartrige.h"
+#include <memory>
 
 Ppu::Ppu()
 {
@@ -10,6 +11,10 @@ Ppu::Ppu()
         0xEFEEEF, 0x4588FE, 0x7776FE, 0x9944FF ,0xBB44EE, 0xCD5598, 0xDD6644, 0xCC8901, 0xBAAA01, 0x77BA01, 0x22BB22, 0x23BB76, 0x22BBCC, 0x454544, 0x000000, 0x000000,
         0xEFEEEF, 0x99CCFF, 0xAAABFE, 0xBA98FF ,0xDD98FE, 0xEF99DC, 0xEFABAA, 0xEEBA98, 0xEFDD89, 0xBBDC89, 0x99DC98, 0x99DDBB, 0x98DDEF, 0xAAAAAA, 0x000000, 0x000000,
     };
+}
+
+Ppu::~Ppu()
+{
 }
 
 void Ppu::CpuWrite(uint16_t address, uint8_t data)
@@ -31,7 +36,7 @@ uint8_t Ppu::PpuRead(uint16_t address, bool readOnly)
     return 0;
 }
 
-void Ppu::connectCartrige(const Cartrige* cartrige)
+void Ppu::connectCartrige(const std::shared_ptr<Cartrige>& cartrige)
 {
     this->cartrige = cartrige;
 }

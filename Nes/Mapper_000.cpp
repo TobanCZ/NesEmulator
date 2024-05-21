@@ -2,7 +2,6 @@
 //https://www.nesdev.org/wiki/NROM
 
 
-
 uint32_t Mapper_000::CpuWrite(uint16_t address)
 {
 	return address & (PRGbanks > 1 ? 0x7FFF : 0x3FFF);

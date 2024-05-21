@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <array>
+#include <memory>
 
 #include "Mapper_000.h"
 
@@ -36,7 +37,7 @@ private:
 	uint8_t PRGbanks = 0;
 	uint8_t CHRbanks = 0;
 
-	Mapper* mapper;
+	std::shared_ptr<Mapper_000> mapper;
 
 public:
 	void CpuWrite(uint16_t address, uint8_t data);

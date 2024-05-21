@@ -3,9 +3,7 @@
 class Mapper_000 :public Mapper
 {
 public:
-	Mapper_000(uint8_t PRGbanks, uint8_t CHRbanks);
-	~Mapper_000();
-
+	using Mapper::Mapper;
 
 public:
 	uint32_t CpuWrite(uint16_t address) override;

@@ -27,6 +27,9 @@ namespace renderer
 	public:
 		Renderer();
 		~Renderer();
+
+	public:
+		void Start();
 	};
 }
 

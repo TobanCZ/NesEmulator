@@ -1,5 +1,9 @@
 #pragma once
 #include <array>
+#include <cstdint>
+#include <memory>
+#include "Cartrige.h"
+
 class Ppu
 {
 public:
@@ -12,6 +16,7 @@ public:
 	std::array<uint8_t,32> pallet;
 
 private:
+	std::shared_ptr<Cartrige> cartrige;
 	std::array<uint32_t, 16*4> colorPallet;
 
 public:
@@ -22,10 +27,7 @@ public:
 	uint8_t PpuRead(uint16_t address, bool readOnly = false);
 
 public:
-	void connectCartrige(const Cartrige* cartrige);
+	void connectCartrige(const std::shared_ptr<Cartrige>& cartrige);
 	void clock();
-
-private:
-	Cartrige* cartrige;
 };
 

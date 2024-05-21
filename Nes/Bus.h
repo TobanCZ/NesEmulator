@@ -14,7 +14,7 @@ public:
 public: 
 	Cpu cpu;
 	Ppu ppu;
-	Cartrige cartrige;
+	std::shared_ptr<Cartrige> cartrige;
 	std::array<uint8_t, 2 * 1024> ram;
 
 public: //funkce
@@ -22,7 +22,7 @@ public: //funkce
 	uint8_t CpuRead(uint16_t address, bool readOnly = false);
 
 public: //system
-	void insertCartrige(const Cartrige& cartrige);
+	void insertCartrige(const std::shared_ptr<Cartrige>& cartrige);
 	void reset();
 	void clock();
 

@@ -45,9 +45,6 @@
     <ClCompile Include="Mapper_000.cpp">
       <Filter>Zdrojové soubory\Mappers</Filter>
     </ClCompile>
-    <ClCompile Include="glad.c">
-      <Filter>Zdrojové soubory</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bus.h">
@@ -71,8 +68,5 @@
     <ClInclude Include="Renderer.h">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="glfw3.dll" />
   </ItemGroup>
 </Project>

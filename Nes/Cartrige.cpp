@@ -27,10 +27,14 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
 
     switch (mapperId)
     {
-    case 0:mapper = &Mapper_000(PRGbanks,CHRbanks);
+    case 0:mapper = std::make_shared<Mapper_000>(PRGbanks, CHRbanks); break;
     }
 
     ifs.close();
+}
+
+Cartrige::~Cartrige()
+{
 }
 
 void Cartrige::CpuWrite(uint16_t address, uint8_t data)

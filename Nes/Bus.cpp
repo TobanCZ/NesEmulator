@@ -5,6 +5,10 @@ Bus::Bus()
 	cpu.connectBus(this);
 }
 
+Bus::~Bus()
+{
+}
+
 void Bus::CpuWrite(uint16_t address, uint8_t data)
 {
 	if (address >= 0x0000 && address <= 0x1FFF)
@@ -21,7 +25,7 @@ uint8_t Bus::CpuRead(uint16_t address, bool readOnly)
 		return ppu.CpuRead(address & 0x07FF,readOnly);
 }
 
-void Bus::insertCartrige(const Cartrige& cartrige)
+void Bus::insertCartrige(const std::shared_ptr<Cartrige>& cartrige)
 {
 	this->cartrige = cartrige;
 	ppu.connectCartrige(cartrige);
