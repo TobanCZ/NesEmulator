@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace rndr
 {
@@ -40,17 +41,22 @@ namespace rndr
 	class Renderer
 	{
 	public:
-		Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(), void (*guiCallback)());
+		Renderer(std::string title, int winWidth,int winHeight, int nesWidth, int nesHeight ,void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(), void (*guiCallback)(std::shared_ptr<bool> isRunning));
 		~Renderer();
 		
 
 	public:
 		std::string title;
+		int winWidth;
+		int winHeight;
+		int nesWidth;
+		int nesHeight;
 		void Start();
 		void Draw(const Sprite& sprite, int posX, int posY);
-		bool isRunning;
+		std::shared_ptr<bool> isRunning;
 		SDL_Window* window;
 		SDL_Renderer* renderer;
+		SDL_Renderer* GUIrenderer;
 
 	private:
 		SDL_Texture* canvas;
@@ -59,11 +65,10 @@ namespace rndr
 		void Clean();
 		void Update();
 		void Render();
-		void HandleEvents();
 		void updateWindowTitleWithFPS(SDL_Window* window, Uint32 frameCount, Uint32 startTime);
 		void (*updateCallback)();
 		void (*renderCallback)(rndr::Renderer* renderer);
-		void (*guiCallback)();
+		void (*guiCallback)(std::shared_ptr<bool> isRunning);
 		void (*cleanCallback)();
 	};
 }

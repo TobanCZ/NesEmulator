@@ -13,7 +13,7 @@
 void Update();
 void Render(rndr::Renderer* rnd);
 void clean();
-void guiUpdate();
+void guiUpdate(std::shared_ptr<bool> isRunning);
 
 std::unique_ptr<Bus> nes;
 std::unique_ptr<Gui> gui;
@@ -29,8 +29,8 @@ int main()
 	nes->insertCartrige(cartige);
 	nes->reset();
 
-	rndr::Renderer renderer("NES", Update, Render, clean, guiUpdate);
-	gui = std::make_unique<Gui>(renderer.window,renderer.renderer);
+	rndr::Renderer renderer("NES",1000,800, 256, 240, Update, Render, clean, guiUpdate);
+	gui = std::make_unique<Gui>(renderer.window,renderer.renderer,1000,800);
 	
 	renderer.Start();
 	return 0;
@@ -47,9 +47,9 @@ void Render(rndr::Renderer* renderer)
 	renderer->Draw(*nes->ppu.backgroundCanvas,0,0);
 }
 
-void guiUpdate()
+void guiUpdate(std::shared_ptr<bool> isRunning)
 {
-	gui->Render();
+	gui->Render(isRunning);
 }
 
 void clean()

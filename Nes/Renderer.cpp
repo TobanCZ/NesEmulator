@@ -4,11 +4,9 @@
 #include <stdlib.h>
 #include <SDL.h>
 #include <vector>
-
-#define WIN_WIDTH 256 *4 
-#define WIN_HEIGHT 240 *4
-#define RENDER_WIDTH 256 
-#define RENDER_HEIGHT 240 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
 
 rndr::Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
@@ -67,13 +65,18 @@ void rndr::Sprite::SetPixel(int x, int y, Pixel pixel)
 }
 
 
-rndr::Renderer::Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(),  void (*guiCallback)())
+rndr::Renderer::Renderer(std::string title, int winWidth, int winHeight, int nesWidth, int nesHeight, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(),  void (*guiCallback)(std::shared_ptr<bool> isRunning))
 {
     this->title = title;
+    this->winWidth = winWidth;
+    this->winHeight = winHeight;
+    this->nesWidth = nesWidth;
+    this->nesHeight = nesHeight;
     this->updateCallback = updateCallback;
     this->renderCallback = renderCallback;
     this->guiCallback = guiCallback;
     this->cleanCallback = cleanCallback;
+    isRunning = std::make_shared<bool>(false);
     Init();
 }
 
@@ -85,11 +88,10 @@ rndr::Renderer::~Renderer()
 
 void rndr::Renderer::Start()
 {
-    while (isRunning)
+    while (*isRunning)
     {
-        HandleEvents();
         Update();
-        Render();
+        Render(); 
     }
     Clean();
 }
@@ -100,7 +102,7 @@ void rndr::Renderer::Init()
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
    
     // create SDL window
-    window = SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WIN_WIDTH,WIN_HEIGHT,SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,winWidth,winHeight,SDL_WINDOW_RESIZABLE);
     if (window == NULL) 
         SDL_Log("Unable to create window: %s", SDL_GetError());
     
@@ -109,17 +111,20 @@ void rndr::Renderer::Init()
     if (renderer == NULL) 
         SDL_Log("Unable to create renderer: %s", SDL_GetError());
 
-    SDL_RenderSetLogicalSize(renderer, RENDER_WIDTH, RENDER_HEIGHT);
+    SDL_RenderSetLogicalSize(renderer, nesWidth, nesHeight);
     
-    canvas = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, RENDER_WIDTH, RENDER_HEIGHT);
+    canvas = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, nesWidth, nesHeight);
     if (canvas == NULL)
     {
         SDL_Log("Unable to create texture: %s", SDL_GetError());
         return;
     }
 
+ /*   GUIrenderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (GUIrenderer == NULL)
+        SDL_Log("Unable to create GUIrenderer: %s", SDL_GetError());*/
 
-    isRunning = true;
+    *isRunning = true;
 }
 
 void rndr::Renderer::Clean()
@@ -155,7 +160,7 @@ void rndr::Renderer::Render()
 {
     SDL_RenderClear(renderer);
    
-    int texture_pitch = RENDER_WIDTH * 3;
+    int texture_pitch = nesWidth * 4;
     if (SDL_LockTexture(canvas, NULL, &canvas_pixels, &texture_pitch) != 0)
     {
         SDL_Log("Unable to lock texture: %s", SDL_GetError());
@@ -164,25 +169,12 @@ void rndr::Renderer::Render()
 
     renderCallback(this);
     SDL_UnlockTexture(canvas);
-    SDL_Rect destRect = { 0, 0, RENDER_WIDTH, RENDER_HEIGHT };
+    SDL_Rect destRect = { 0, 0, winWidth, winHeight };
     SDL_RenderCopy(renderer, canvas, NULL, &destRect);
-    guiCallback();
+    guiCallback(isRunning);
     SDL_RenderPresent(renderer);
 }
 
-void rndr::Renderer::HandleEvents()
-{
-    SDL_Event e;
-    SDL_PollEvent(&e);
-    switch (e.type)
-    {
-    case SDL_QUIT:
-        isRunning = false;
-        break;
-    default:
-        break;
-    }
-}
 
 void rndr::Renderer::updateWindowTitleWithFPS(SDL_Window* window, Uint32 frameCount, Uint32 startTime)
 {
@@ -203,10 +195,10 @@ void rndr::Renderer::Draw(const Sprite& sprite,int posX, int posY)
          for (int x = 0; x < sprite.width; x++)
          {
              const Pixel& pixel = sprite.pixels[y * sprite.width + x];
-             dst[(y + posY) * 4 * RENDER_WIDTH + (x + posX) * 4 + 0] = pixel.r;
-             dst[(y + posY) * 4 * RENDER_WIDTH + (x + posX) * 4 + 1] = pixel.g;
-             dst[(y + posY) * 4 * RENDER_WIDTH + (x + posX) * 4 + 2] = pixel.b;
-             dst[(y + posY) * 4 * RENDER_WIDTH + (x + posX) * 4 + 3] = pixel.a;
+             dst[(y + posY) * 4 * nesWidth + (x + posX) * 4 + 0] = pixel.r;
+             dst[(y + posY) * 4 * nesWidth + (x + posX) * 4 + 1] = pixel.g;
+             dst[(y + posY) * 4 * nesWidth + (x + posX) * 4 + 2] = pixel.b;
+             dst[(y + posY) * 4 * nesWidth + (x + posX) * 4 + 3] = pixel.a;
          }
      }
 }
