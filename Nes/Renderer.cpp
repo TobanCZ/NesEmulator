@@ -67,13 +67,24 @@ void rndr::Sprite::SetPixel(int x, int y, Pixel pixel)
 }
 
 
-rndr::Renderer::Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer))
+rndr::Renderer::Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(),  void (*guiCallback)())
 {
     this->title = title;
     this->updateCallback = updateCallback;
     this->renderCallback = renderCallback;
+    this->guiCallback = guiCallback;
+    this->cleanCallback = cleanCallback;
     Init();
+}
 
+
+rndr::Renderer::~Renderer()
+{
+}
+
+
+void rndr::Renderer::Start()
+{
     while (isRunning)
     {
         HandleEvents();
@@ -81,11 +92,6 @@ rndr::Renderer::Renderer(std::string title, void (*updateCallback)(), void (*ren
         Render();
     }
     Clean();
-}
-
-
-rndr::Renderer::~Renderer()
-{
 }
 
 void rndr::Renderer::Init()
@@ -119,6 +125,7 @@ void rndr::Renderer::Init()
 void rndr::Renderer::Clean()
 {
     //SDL_DestroyTexture(texture);
+    cleanCallback();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -159,6 +166,7 @@ void rndr::Renderer::Render()
     SDL_UnlockTexture(canvas);
     SDL_Rect destRect = { 0, 0, RENDER_WIDTH, RENDER_HEIGHT };
     SDL_RenderCopy(renderer, canvas, NULL, &destRect);
+    guiCallback();
     SDL_RenderPresent(renderer);
 }
 

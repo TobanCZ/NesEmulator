@@ -66,7 +66,6 @@ void Cpu::clock()
 	if (cycles == 0)
 	{
 		currentOpcode = read(pc);
-		std::cout << currentOpcode << std::endl;
 		setFlag(U, 1);
 		cycles = opcodes[currentOpcode].cycles;
 		cycles += (this->*opcodes[currentOpcode].addressMode)();

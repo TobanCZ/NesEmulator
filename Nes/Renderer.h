@@ -40,18 +40,19 @@ namespace rndr
 	class Renderer
 	{
 	public:
-		Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer));
+		Renderer(std::string title, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(), void (*guiCallback)());
 		~Renderer();
 		
 
 	public:
 		std::string title;
+		void Start();
 		void Draw(const Sprite& sprite, int posX, int posY);
 		bool isRunning;
-
-	private:
 		SDL_Window* window;
 		SDL_Renderer* renderer;
+
+	private:
 		SDL_Texture* canvas;
 		void* canvas_pixels = NULL;
 		void Init();
@@ -62,6 +63,8 @@ namespace rndr
 		void updateWindowTitleWithFPS(SDL_Window* window, Uint32 frameCount, Uint32 startTime);
 		void (*updateCallback)();
 		void (*renderCallback)(rndr::Renderer* renderer);
+		void (*guiCallback)();
+		void (*cleanCallback)();
 	};
 }
 
