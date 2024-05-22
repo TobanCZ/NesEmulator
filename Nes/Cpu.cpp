@@ -1,5 +1,6 @@
 #include "Cpu.h"
 #include "Bus.h"
+#include <iostream>
 
 Cpu::Cpu()
 {
@@ -65,6 +66,7 @@ void Cpu::clock()
 	if (cycles == 0)
 	{
 		currentOpcode = read(pc);
+		std::cout << currentOpcode << std::endl;
 		setFlag(U, 1);
 		cycles = opcodes[currentOpcode].cycles;
 		cycles += (this->*opcodes[currentOpcode].addressMode)();
@@ -156,9 +158,9 @@ uint8_t Cpu::IMM()
 	address = pc;
 	return 0; 
 }
-uint8_t Cpu::ABS()
+uint8_t Cpu::ABS() 
 {
-	pc++;
+	pc++; 
 	uint16_t low = read(pc);
 	pc++;
 	uint16_t high = read(pc);

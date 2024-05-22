@@ -9,7 +9,11 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
     {
         ifs.read((char*)&header, sizeof(HEADER));
 
+        if (header.mapper1 & 0x04)
+            ifs.seekg(512, std::ios_base::cur);
+
         mapperId = (header.mapper2 & 0xF0) | (header.mapper1 >> 4);   //https://www.nesdev.org/wiki/INES#Flags_7
+        vertical = (header.mapper1 & 0x01) ? true : false;
     }
 
     fileType = 1;
@@ -31,6 +35,7 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
     }
 
     ifs.close();
+    bImageValid = true;
 }
 
 Cartrige::~Cartrige()

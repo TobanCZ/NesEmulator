@@ -28,5 +28,6 @@ public: //system
 
 private:
 	uint32_t clockCount;
+	uint32_t nSystemClockCounter = 0;
 };
 

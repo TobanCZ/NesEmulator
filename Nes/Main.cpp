@@ -2,12 +2,41 @@
 #include <sstream>
 #include "Bus.h"
 #include "Renderer.h"
+#include "Cartrige.h"
+#include <SDL.h>
+#include <string>
+#include <memory>
+#undef main
 
+
+void Update();
+void Render(rndr::Renderer* rnd);
+
+std::unique_ptr<Bus> nes;
 
 int main()
 {
-	renderer::Renderer renderer;
+	nes = std::make_unique<Bus>();
+	std::shared_ptr<Cartrige> cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/nestest.nes");
 
-	renderer.Start();
+	if (!cartige->bImageValid)
+		return 0;
+
+	nes->insertCartrige(cartige);
+	nes->reset();
+
+	rndr::Renderer renderer("NES", Update, Render);
+
 	return 0;
+}
+
+void Update()
+{
+	do { nes->clock(); } while (!nes->ppu.frame_complete);
+	nes->ppu.frame_complete = false;
+}
+
+void Render(rndr::Renderer* renderer)
+{
+	renderer->Draw(*nes->ppu.backgroundCanvas,0,0);
 }

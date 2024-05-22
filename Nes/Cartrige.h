@@ -13,6 +13,10 @@ public:
 	Cartrige(const std::string path);
 	~Cartrige();
 
+
+	bool vertical;
+	bool bImageValid = false;
+
 private:
 	struct HEADER
 	{
