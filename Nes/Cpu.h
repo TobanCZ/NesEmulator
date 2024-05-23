@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <map>
 
 class Bus;
 
@@ -47,6 +48,12 @@ public:
 	void irq();	
 	void nmi();
 	void clock();
+	bool getFlag(Flags flag);
+
+
+
+	std::map<uint16_t, std::string> disassemble(uint16_t nStart, uint16_t nStop);
+
 
 private:
 	//address modes
@@ -138,21 +145,23 @@ private:
 	uint8_t read(uint16_t address);
 
 	void setFlag(Flags flag, bool state);
-	bool getFlag(Flags flag);
+	
 
 
 private:
 	 Bus* bus = nullptr;
+	 uint8_t currentOpcode;
 
+	 struct OPCODE
+	 {
+		 uint8_t(Cpu::* instruction)(void) = nullptr;
+		 uint8_t(Cpu::* addressMode)(void) = nullptr;
+		 uint8_t cycles = 0;
+		 std::string name;
+	 };
 
-	struct OPCODE
-	{
-		uint8_t(Cpu::* instruction)(void) = nullptr;
-		uint8_t(Cpu::* addressMode)(void) = nullptr;
-		uint8_t cycles = 0;
-	};
+	 std::vector<OPCODE> opcodes;
 
-	std::vector<OPCODE> opcodes;
-	uint8_t currentOpcode;
+	
 };
 
