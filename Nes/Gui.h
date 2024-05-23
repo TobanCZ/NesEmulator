@@ -19,7 +19,7 @@ public:
 	int width; 
 	int height;
 	bool singleStep = false;
-	std::map<uint16_t, std::string> disassemlbed;
+	std::map<uint16_t, std::string> disassembler;
 private:
 	void (*eventCallback)(SDL_Event* event);
 	void Init();

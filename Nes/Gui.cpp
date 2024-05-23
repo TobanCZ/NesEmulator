@@ -46,7 +46,7 @@ void Gui::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
-    disassemlbed = cpu->disassemble(0x0000,0xFFFF);
+    disassembler = cpu->disassemble(0x0000,0xFFFF);
 }
 
 void Gui::Render(std::shared_ptr<bool> isRunning)
@@ -170,11 +170,11 @@ void Gui::showAssembly(bool* p_open, int lines)
     {
         int half_lines = lines / 2;
         int start_line = static_cast<int>(cpu->pc - half_lines);
-        auto temp = disassemlbed.lower_bound(start_line);
+        auto temp = disassembler.lower_bound(start_line);
 
         for (int i = 0; i < lines; i++)
         {
-            if (temp != disassemlbed.end())
+            if (temp != disassembler.end())
             {
                 if (i == half_lines) // Highlight the middle line
                 {
