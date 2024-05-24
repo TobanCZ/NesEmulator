@@ -10,7 +10,7 @@
 class Gui
 {
 public:
-	Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event));
+	Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event), void (*resetCallback)());
 	~Gui();
 
 public:
@@ -18,10 +18,11 @@ public:
 	void Clean();
 	int width; 
 	int height;
-	bool singleStep = false;
+	bool singleStep = true;
 	std::map<uint16_t, std::string> disassembler;
 private:
 	void (*eventCallback)(SDL_Event* event);
+	void (*resetCallback)();
 	void Init();
 	SDL_Window* window;
 	SDL_Renderer* renderer;

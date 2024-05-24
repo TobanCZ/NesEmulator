@@ -241,7 +241,7 @@ uint8_t Cpu::ABSI()
 uint8_t Cpu::ZP()
 {
 	pc++;
-	uint8_t addr = read(pc);
+	uint16_t addr = read(pc);
 	addr = 0x00FF & addr;
 	data = read(addr);
 	address = addr;
@@ -250,7 +250,7 @@ uint8_t Cpu::ZP()
 uint8_t Cpu::XZP()
 {
 	pc++;
-	uint8_t addr = read(pc);
+	uint16_t addr = read(pc);
 	addr = 0x00FF & (addr + rX);
 	data = read(addr);
 	address = addr;
@@ -259,7 +259,7 @@ uint8_t Cpu::XZP()
 uint8_t Cpu::YZP()
 {
 	pc++;
-	uint8_t addr = read(pc);
+	uint16_t addr = read(pc);
 	addr = 0x00FF & (addr + rY);
 	data = read(addr);
 	address = addr;
@@ -268,7 +268,7 @@ uint8_t Cpu::YZP()
 uint8_t Cpu::XZPI() //X-Indexed Zero Page Indirect
 {
 	pc++;
-	uint8_t addr = read(pc);
+	uint16_t addr = read(pc);
 
 	uint8_t low = read((addr + rX) & 0x00FF);
 	uint8_t high = read((addr + rX + 1) & 0x00FF);
@@ -282,13 +282,13 @@ uint8_t Cpu::XZPI() //X-Indexed Zero Page Indirect
 uint8_t Cpu::YZPI() //Zero Page Indirect Y-Indexed
 {
 	pc++;
-	uint8_t addr = read(pc);
+	uint16_t addr = read(pc);
 
 	uint8_t low = read(addr & 0x00FF);
 	uint8_t high = read((addr + 1) & 0x00FF);
 
 	addr = (high << 8) | low;
-	data = read(addr) + rY;
+	data = read(addr + rY); ///////////////          data = read(addr) + rY
 	address = addr;
 
 	if (high != (uint16_t)(data >> 8)) //tady si nejsem jisty
@@ -616,13 +616,12 @@ uint8_t Cpu::JMP()
 }
 uint8_t Cpu::JSR()
 {
-
-	write(0x0100 + sp, (pc >> 8) & 0x00FF);
+	write(0x0100 + sp, (pc-1 >> 8) & 0x00FF);
 	sp--;
-	write(0x0100 + sp, pc & 0x00FF);
+	write(0x0100 + sp, pc-1 & 0x00FF);
 	sp--;
 
-	pc = address;
+	pc = address - 1;
 	return 0;
 }
 uint8_t Cpu::RTI()

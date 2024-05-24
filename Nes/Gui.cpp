@@ -14,8 +14,13 @@
 
 char* hex(uint32_t n, uint8_t d);
 char* combineChar(char* first, const char* second);
+SDL_Texture* CreateTextureFromSprite(SDL_Renderer* renderer, const rndr::Sprite& sprite);
+void DrawColoredSquare(ImDrawList* draw_list, const ImVec2& pos, const ImVec2& size, ImU32 color) {
+    draw_list->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), color);
+}
 
-Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event))
+
+Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event), void (*resetCallback)())
 {
 	this->window = window;
 	this->renderer = renderer;
@@ -24,6 +29,7 @@ Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu*
     this->cpu = cpu;
     this->ppu = ppu;
     this->eventCallback = eventCallback;
+    this->resetCallback = resetCallback;
 	Init();
 }
 
@@ -87,6 +93,7 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
         }
         if (ImGui::BeginMenu("Tools"))
         {
+            if (ImGui::MenuItem("Reset")) { resetCallback(); };
             ImGui::MenuItem("CPU", NULL, &show_CPU);
             ImGui::MenuItem("RAM", NULL, &show_RAM);
             ImGui::MenuItem("PPU", NULL, &show_PPU);
@@ -169,8 +176,10 @@ void Gui::showAssembly(bool* p_open, int lines)
     if (ImGui::Begin("Assembly", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
     {
         int half_lines = lines / 2;
-        int start_line = static_cast<int>(cpu->pc - half_lines);
-        auto temp = disassembler.lower_bound(start_line);
+        auto temp = disassembler.lower_bound(cpu->pc);
+
+        for (int i = 0; i < half_lines; i++)
+            --temp;
 
         for (int i = 0; i < lines; i++)
         {
@@ -193,9 +202,86 @@ void Gui::showAssembly(bool* p_open, int lines)
 
 void Gui::showPPU(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(200, 150), ImGuiCond_FirstUseEver);
+    ImVec4 red(1, 0, 0, 1);
+    ImVec4 green(0, 1, 0, 1);
+
+    ImGui::SetNextWindowSize(ImVec2(750, 750), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("PPU", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
     {
+        ImGui::Text("Control: ");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.enable_nmi? green : red, "NMI");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.increment_mode ? green : red, "increment");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.nametable_x ? green : red, "nameX");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.nametable_y ? green : red, "nameY");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.pattern_background? green : red, "patternBG");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.pattern_sprite ? green : red, "patternSP");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.slave_mode ? green : red, "slave");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->control.sprite_size ? green : red, "SPsize");
+
+        ImGui::Text("Mask: ");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.render_sprites ? green : red, "renderSP");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.render_background ? green : red, "renderBG");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.render_sprites_left ? green : red, "renderSPL");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.render_background_left ? green : red, "renderBGL");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.grayscale ? green : red, "grayscale");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.enchance_red ? green : red, "eR");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.enchance_green ? green : red, "eG");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->mask.enchance_blue ? green : red, "eB");
+
+        ImGui::Text("Status: ");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->status.sprite_overflow ? green : red, "SPoverflow");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->status.sprite_zero_hit ? green : red, "SPzeroHit");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->status.vertical_blank ? green : red, "VB");
+        ImGui::SameLine();
+        ImGui::TextColored(ppu->status.unused ? green : red, "U");
+
+
+        rndr::Sprite idk(100,100,std::vector<rndr::Pixel>(100*100,rndr::Pixel(255,0,0,1)));
+
+
+        ImGui::Columns(2, nullptr, false);
+
+        ImGui::Spacing();
+        ImGui::Text("Pattern table 0:");
+        ImGui::Image(CreateTextureFromSprite(renderer, idk), ImVec2(100, 100));
+
+        ImGui::NextColumn();
+
+        ImGui::Spacing();
+        ImGui::Text("Pattern table 1:");
+
+        ImGui::Image(CreateTextureFromSprite(renderer, idk), ImVec2(100, 100));
+
+        ImGui::Columns(1);
+
+        ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
+        ImVec2 squareSize(20, 20);
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 pos(cursor_pos.x + (squareSize.x + ImGui::GetStyle().ItemSpacing.x), cursor_pos.y);
+        DrawColoredSquare(draw_list, pos, squareSize, rndr::Pixel(255, 0, 0, 1).hex);
+        ImGui::NextColumn();
+       
+
+        //ImGui::Colo
     }
     ImGui::End();
 }
@@ -219,6 +305,23 @@ char* combineChar(char* first, const char* second)
     char* result = new char[len];
     strcpy_s(result, len+1, s.c_str());
     return result;
+}
+
+SDL_Texture* CreateTextureFromSprite(SDL_Renderer* renderer, const rndr::Sprite& sprite)
+{
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, sprite.width, sprite.height);
+    if (!texture) {
+        return nullptr;
+    }
+
+    std::vector<uint32_t> pixelData(sprite.width * sprite.height);
+    for (size_t i = 0; i < sprite.pixels.size(); ++i) {
+        const rndr::Pixel& pixel = sprite.pixels[i];
+        pixelData[i] = (pixel.r << 24) | (pixel.g << 16) | (pixel.b << 8) | pixel.a;
+    }
+
+    SDL_UpdateTexture(texture, nullptr, pixelData.data(), sprite.width * sizeof(uint32_t));
+    return texture;
 }
 
 void Gui::Clean()

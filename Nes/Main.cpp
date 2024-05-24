@@ -15,14 +15,16 @@ void Render(rndr::Renderer* rnd);
 void clean();
 void guiUpdate(std::shared_ptr<bool> isRunning);
 void Event(SDL_Event* event);
+void Reset();
 
 std::unique_ptr<Bus> nes;
 std::unique_ptr<Gui> gui;
 
+std::shared_ptr<Cartrige> cartige;
 int main()
 {
 	nes = std::make_unique<Bus>();
-	std::shared_ptr<Cartrige> cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/Super Mario Bros.nes");
+	cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/nestest.nes");
 
 	if (!cartige->bImageValid)
 		return 0;
@@ -31,10 +33,16 @@ int main()
 	nes->reset();
 
 	rndr::Renderer renderer("NES",1000,800, 256, 240, Update, Render, clean, guiUpdate);
-	gui = std::make_unique<Gui>(renderer.window,renderer.renderer,1000,800, &nes->cpu, &nes->ppu,Event);
+	gui = std::make_unique<Gui>(renderer.window,renderer.renderer,1000,800, &nes->cpu, &nes->ppu,Event,Reset);
 	
 	renderer.Start();
 	return 0;
+}
+
+void Reset()
+{
+	nes->insertCartrige(cartige);
+	nes->reset();
 }
 
 void Update()
@@ -62,6 +70,14 @@ void Event(SDL_Event* event)
 				do { nes->clock(); } while (!nes->ppu.frame_complete);
 				do { nes->clock(); } while (!nes->cpu.complete());
 				nes->ppu.frame_complete = false;
+			}
+			if (event->key.keysym.sym == SDLK_b)
+			{
+				for (int i = 0; i < 100; i++)
+				{
+					do { nes->clock(); } while (!nes->cpu.complete());
+					do { nes->clock(); } while (nes->cpu.complete());
+				}
 			}
 		}
 	}

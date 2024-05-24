@@ -38,8 +38,6 @@ public:
 	void connectCartrige(const std::shared_ptr<Cartrige>& cartrige);
 	void clock();
 
-private:
-	int16_t cycle = 0;
 	int16_t scanline = 0;
 
 	union
@@ -85,6 +83,9 @@ private:
 		};
 		uint8_t reg;
 	} control;
+
+private:
+	int16_t cycle = 0;
 
 	uint8_t adress_latch = 0x00;
 	uint8_t ppu_data_buffer = 0x00;
