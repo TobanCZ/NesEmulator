@@ -41,7 +41,7 @@ namespace rndr
 	class Renderer
 	{
 	public:
-		Renderer(std::string title, int winWidth,int winHeight, int nesWidth, int nesHeight ,void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(), void (*guiCallback)(std::shared_ptr<bool> isRunning));
+		Renderer(std::string title, int winWidth,int winHeight, int nesWidth, int nesHeight ,void (*updateCallback)(Uint32 elapsed), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(), void (*guiCallback)(std::shared_ptr<bool> isRunning));
 		~Renderer();
 		
 
@@ -66,7 +66,7 @@ namespace rndr
 		void Update();
 		void Render();
 		void updateWindowTitleWithFPS(SDL_Window* window, Uint32 frameCount, Uint32 startTime);
-		void (*updateCallback)();
+		void (*updateCallback)(Uint32 elapsed);
 		void (*renderCallback)(rndr::Renderer* renderer);
 		void (*guiCallback)(std::shared_ptr<bool> isRunning);
 		void (*cleanCallback)();

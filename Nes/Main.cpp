@@ -10,7 +10,7 @@
 #undef main
 
 
-void Update();
+void Update(Uint32 elapsed);
 void Render(rndr::Renderer* rnd);
 void clean();
 void guiUpdate(std::shared_ptr<bool> isRunning);
@@ -21,10 +21,17 @@ std::unique_ptr<Bus> nes;
 std::unique_ptr<Gui> gui;
 
 std::shared_ptr<Cartrige> cartige;
+float fResidualTime = 0.0f;
+
+bool isKeyPressed(SDL_Keycode key) {
+	const Uint8* state = SDL_GetKeyboardState(NULL);
+	return state[SDL_GetScancodeFromKey(key)] != 0;
+}
+
 int main()
 {
 	nes = std::make_unique<Bus>();
-	cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/Tests/nestest.nes");
+	cartige = std::make_shared<Cartrige>("");
 
 	if (!cartige->bImageValid)
 		return 0;
@@ -45,25 +52,29 @@ void Reset()
 	nes->reset();
 }
 
-void Update()
+void Update(Uint32 elapsed)
 {
+	nes->controller[0] = 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_DOWN) ? 0x04 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_UP) ? 0x08 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_RIGHT) ? 0x01 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_LEFT) ? 0x02 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_d) ? 0x20 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_s) ? 0x10 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_z) ? 0x40 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_x) ? 0x80 : 0x00;
 	if (!gui->singleStep)
 	{
-		do { 
-			if (nes->cpu.pc == 0xFFFF) 
-			{
-				gui->singleStep = true;
-				break;
-			}
-			else
-			{
-				nes->clock();
-			}
-		} while (!nes->ppu.frame_complete);
-		nes->ppu.frame_complete = false;
-
-		
+		if (fResidualTime > 0.0f)
+			fResidualTime -= elapsed;
+		else
+		{
+			fResidualTime += (1.0f / 60.0f) - elapsed;
+			do { nes->clock(); } while (!nes->ppu.frame_complete);
+			nes->ppu.frame_complete = false;
+		}
 	}
+	
 }
 
 void Event(SDL_Event* event)
@@ -96,18 +107,7 @@ void Event(SDL_Event* event)
 			}
 		}
 
-		if (event->key.keysym.sym == SDLK_DOWN)
-		{
-			nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
-		}
-		nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_UP ? 0x08 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_RIGHT ? 0x01 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_LEFT ? 0x02 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_s ? 0x20 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_d ? 0x10 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_KP_ENTER ? 0x40 : 0x00;
-		nes->controller[0] |= event->key.keysym.sym == SDLK_RSHIFT ? 0x80 : 0x00;
+		
 	}
 
 }

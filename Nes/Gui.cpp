@@ -1,4 +1,4 @@
-#include "Gui.h"
+﻿#include "Gui.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
@@ -17,7 +17,6 @@
 #include <locale>
 #include <codecvt>
 
-
 char* hex(uint32_t n, uint8_t d);
 char* combineChar(char* first, const char* second);
 
@@ -32,7 +31,7 @@ std::string WCharToString(const wchar_t* wstr) {
 
 
 Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Bus* bus, void (*eventCallback)(SDL_Event* event), void (*resetCallback)())
-    : window(window), renderer(renderer), width(width), height(height), bus(bus), eventCallback(eventCallback), resetCallback(resetCallback), singleStep(true)
+    : window(window), renderer(renderer), width(width), height(height), bus(bus), eventCallback(eventCallback), resetCallback(resetCallback), singleStep(false)
 {
     Init();
 }
@@ -56,7 +55,7 @@ void Gui::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
-    disassembler = bus->cpu.disassemble(0x0000,0xFFFF);
+    
 
     for (int i = 0; i < palletTexture.size(); i++)
     {
@@ -106,11 +105,16 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     static bool show_RAM = false;
     static bool show_Assembly = false;
     static bool show_PPU = false;
+    static bool show_Controller = false;
+
+    if (disassembler.empty())
+        show_Assembly = false;
 
     if (show_CPU) showCPU(&show_CPU);
     if (show_RAM) showRAM(&show_RAM);
-    if (show_Assembly) showAssembly(&show_Assembly,33);
+    if (show_Assembly) showAssembly(&show_Assembly, 33);
     if (show_PPU) showPPU(&show_PPU);
+    if (show_Controller) showController(&show_Controller);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -122,7 +126,10 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
 
                 if (OpenFileDialog(filePath, sizeof(filePath) / sizeof(filePath[0]))) {
                     std::string filePathStr = WCharToString(filePath);
-                    std::cout << "Vybrany soubor: " << filePathStr << std::endl;
+                    std::shared_ptr<Cartrige> karta = std::make_shared<Cartrige>(filePathStr);
+                    bus->insertCartrige(karta);
+                    disassembler = bus->cpu.disassemble(0x0000, 0xFFFF);
+                    bus->reset();
                 }
                 else {
                     std::cout << "Zadny soubor nebyl vybran nebo doslo k chybe." << std::endl;
@@ -132,11 +139,12 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Reset")) { resetCallback(); };
+            if (ImGui::MenuItem("Reset")) { bus->reset(); };
             ImGui::MenuItem("CPU", NULL, &show_CPU);
             ImGui::MenuItem("RAM", NULL, &show_RAM);
             ImGui::MenuItem("PPU", NULL, &show_PPU);
             ImGui::MenuItem("Assembly", NULL, &show_Assembly);
+            ImGui::MenuItem("Controller", NULL, &show_Controller);
             ImGui::Checkbox("SingleStep", &singleStep);
             ImGui::EndMenu();
         }
@@ -172,6 +180,31 @@ bool Gui::OpenFileDialog(wchar_t* filePath, DWORD filePathSize) {
     return false;
 }
 
+void Gui::showController(bool* p_open)
+{
+    ImVec4 red(1, 0, 0, 1);
+    ImVec4 green(0, 1, 0, 1);
+
+    ImGui::SetNextWindowSize(ImVec2(150, 150), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Controller", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
+    {
+        ImGui::Text("Arrows:");
+        ImGui::TextColored(bus->controller[0] & 0x02 ? green : red, "LEFT");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->controller[0] & 0x01 ? green : red, "RIGHT");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->controller[0] & 0x08 ? green : red, "UP");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->controller[0] & 0x04 ? green : red, "DOWN");
+ 
+        ImGui::TextColored(bus->controller[0] & 0x10 ? green : red, "A (s)");
+        ImGui::TextColored(bus->controller[0] & 0x20 ? green : red, "B (d)");
+        ImGui::TextColored(bus->controller[0] & 0x40 ? green : red, "START (z)");
+        ImGui::TextColored(bus->controller[0] & 0x80 ? green : red, "SELECT (x)");
+    }
+    ImGui::End();
+}
+
 void Gui::showCPU(bool* p_open)
 {
     ImVec4 red(1, 0, 0, 1);
@@ -198,7 +231,7 @@ void Gui::showCPU(bool* p_open)
         ImGui::SameLine();
         ImGui::TextColored(bus->cpu.getFlag(Cpu::N) ? green : red, "N");
 
-        ImGui::Text("srogram sounter:");
+        ImGui::Text("program counter:");
         ImGui::SameLine();
         ImGui::Text(hex(bus->cpu.pc,4));
 
@@ -295,7 +328,7 @@ void Gui::showPPU(bool* p_open)
     ImVec4 red(1, 0, 0, 1);
     ImVec4 green(0, 1, 0, 1);
 
-    ImGui::SetNextWindowSize(ImVec2(750, 750), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(750, 550), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("PPU", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
     {
         ImGui::Text("Control: ");

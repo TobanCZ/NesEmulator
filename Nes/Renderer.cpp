@@ -65,7 +65,7 @@ void rndr::Sprite::SetPixel(int x, int y, Pixel pixel)
 }
 
 
-rndr::Renderer::Renderer(std::string title, int winWidth, int winHeight, int nesWidth, int nesHeight, void (*updateCallback)(), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(),  void (*guiCallback)(std::shared_ptr<bool> isRunning))
+rndr::Renderer::Renderer(std::string title, int winWidth, int winHeight, int nesWidth, int nesHeight, void (*updateCallback)(Uint32 elapsed), void (*renderCallback)(rndr::Renderer* renderer), void (*cleanCallback)(),  void (*guiCallback)(std::shared_ptr<bool> isRunning))
 {
     this->title = title;
     this->winWidth = winWidth;
@@ -144,7 +144,7 @@ void rndr::Renderer::Update()
 
     if (updateCallback)
     {
-        updateCallback();
+        updateCallback(SDL_GetTicks());
     }
 
     frameCount++;

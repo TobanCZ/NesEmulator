@@ -41,5 +41,6 @@ private:
 	void showRAM(bool* p_open);
 	void showAssembly(bool* p_open, int lines);
 	void showPPU(bool* p_open);
+	void showController(bool* p_open);
 };
 
