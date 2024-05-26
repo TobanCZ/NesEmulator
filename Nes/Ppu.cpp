@@ -349,7 +349,7 @@ uint8_t Ppu::CpuRead(uint16_t address, bool readOnly)
         case 0x0001:
             break;
         case 0x0002:
-            data = status.reg;
+            data = (status.reg & 0xE0) | (ppu_data_buffer & 0x1F);
             status.vertical_blank = 0;
             adress_latch = 0;
             break;
@@ -386,6 +386,7 @@ void Ppu::PpuWrite(uint16_t address, uint8_t data)
     }
     else if (address >= 0x2000 && address <= 0x3EFF)
     {
+        address &= 0x0FFF;
         if (cartrige->vertical == true)
         {
             if (address >= 0x0000 && address <= 0x03FF)
@@ -434,6 +435,7 @@ uint8_t Ppu::PpuRead(uint16_t address)
     }
     else if (address >= 0x2000 && address <= 0x3EFF)
     {
+        address &= 0x0FFF;
         if (cartrige->vertical == true)
         {
             if (address >= 0x0000 && address <= 0x03FF)

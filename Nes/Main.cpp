@@ -24,7 +24,7 @@ std::shared_ptr<Cartrige> cartige;
 int main()
 {
 	nes = std::make_unique<Bus>();
-	cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/Ice Climber.nes");
+	cartige = std::make_shared<Cartrige>("C:/Users/tobia/Desktop/Klauzury/NesEmulator/Roms/Tests/nestest.nes");
 
 	if (!cartige->bImageValid)
 		return 0;
@@ -50,7 +50,7 @@ void Update()
 	if (!gui->singleStep)
 	{
 		do { 
-			if (nes->cpu.pc == 0xC8F2)
+			if (nes->cpu.pc == 0xFFFF)
 			{
 				gui->singleStep = true;
 				break;
@@ -92,6 +92,15 @@ void Event(SDL_Event* event)
 					
 				}
 			}
+
+			nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_UP ? 0x08 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_RIGHT ? 0x01 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_LEFT ? 0x02 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_s ? 0x20 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_d ? 0x10 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_KP_ENTER ? 0x40 : 0x00;
+			nes->controller[0] |= event->key.keysym.sym == SDLK_RSHIFT ? 0x80 : 0x00;
 		}
 	}
 }
