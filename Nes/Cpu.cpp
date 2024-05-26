@@ -118,6 +118,11 @@ void Cpu::reset()
 	cycles = 8;
 }
 
+void Cpu::dataFetch()
+{
+	data = read(address);
+}
+
 void Cpu::irq()
 {
 	if (getFlag(I) == 0)
@@ -174,7 +179,6 @@ uint8_t Cpu::ACC()
 uint8_t Cpu::IMM()
 {
 	pc++;
-	data = read(pc);
 	address = pc;
 	return 0; 
 }
@@ -186,7 +190,6 @@ uint8_t Cpu::ABS()
 	uint16_t high = read(pc);
 
 	uint16_t addr = (high << 8) | low;
-	data = read(addr);
 	address = addr;
 	return 0;
 }
@@ -198,7 +201,6 @@ uint8_t Cpu::XABS()
 	uint16_t high = read(pc);
 
 	uint16_t addr = ((high << 8) | low) + rX;
-	data = read(addr);
 	address = addr;
 
 	if (high != (addr >> 8)) //tady si nejsem jisty
@@ -214,7 +216,6 @@ uint8_t Cpu::YABS()
 	uint8_t high = read(pc);
 
 	uint16_t addr = ((high << 8) | low) + rY;
-	data = read(addr);
 	address = addr;
 
 	if (high != (addr >> 8)) //tady si nejsem jisty
@@ -229,11 +230,10 @@ uint8_t Cpu::ABSI()
 	pc++;
 	uint8_t high = read(pc);
 
-	uint16_t addr = ((high << 8) | low) + rY;
+	uint16_t addr = ((high << 8) | low);
 
 	addr = (read(addr + 1) << 8) | read(addr);
 
-	data = read(addr); //tady si taky nejsem jisty
 	address = addr;
 
 	return 0;
@@ -243,7 +243,6 @@ uint8_t Cpu::ZP()
 	pc++;
 	uint16_t addr = read(pc);
 	addr = 0x00FF & addr;
-	data = read(addr);
 	address = addr;
 	return 0;
 }
@@ -252,7 +251,6 @@ uint8_t Cpu::XZP()
 	pc++;
 	uint16_t addr = read(pc);
 	addr = 0x00FF & (addr + rX);
-	data = read(addr);
 	address = addr;
 	return 0;
 }
@@ -261,7 +259,6 @@ uint8_t Cpu::YZP()
 	pc++;
 	uint16_t addr = read(pc);
 	addr = 0x00FF & (addr + rY);
-	data = read(addr);
 	address = addr;
 	return 0;
 }
@@ -274,7 +271,6 @@ uint8_t Cpu::XZPI() //X-Indexed Zero Page Indirect
 	uint8_t high = read((addr + rX + 1) & 0x00FF);
 
 	addr = (high << 8) | low;
-	data = read(addr);
 	address = addr;
 
 	return 0;
@@ -288,8 +284,7 @@ uint8_t Cpu::YZPI() //Zero Page Indirect Y-Indexed
 	uint8_t high = read((addr + 1) & 0x00FF);
 
 	addr = (high << 8) | low;
-	data = read(addr + rY); ///////////////          data = read(addr) + rY
-	address = addr;
+	address = addr + rY;
 
 	if (high != (uint16_t)(data >> 8)) //tady si nejsem jisty
 		return 1;
@@ -309,6 +304,7 @@ uint8_t Cpu::REL()
 //Load
 uint8_t Cpu::LDA()
 {
+	dataFetch();
 	rA = data;
 
 	setFlag(Z,(rA == 0x00));
@@ -318,6 +314,7 @@ uint8_t Cpu::LDA()
 }
 uint8_t Cpu::LDX()
 {
+	dataFetch();
 	rX = data;
 
 	setFlag(Z, (rX == 0x00));
@@ -327,6 +324,7 @@ uint8_t Cpu::LDX()
 }
 uint8_t Cpu::LDY()
 {
+	dataFetch();
 	rY = data;
 
 	setFlag(Z, (rY == 0x00));
@@ -420,32 +418,39 @@ uint8_t Cpu::PLP()
 //Shift
 uint8_t Cpu::ASL()
 {
-	uint8_t carry = data & 0x80;
+	if (opcodes[currentOpcode].addressMode != &Cpu::ACC)
+		dataFetch();
+
 	uint8_t shift = data << 1;
-	setFlag(C, carry > 0);
-	setFlag(Z, (shift == 0x00));
+	setFlag(C, (shift & 0xFF00) > 0);
+	setFlag(Z, (shift & 0x00FF) == 0x00);
 	setFlag(N, (shift & 0x80));
 	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
-		rA = shift;
+		rA = shift & 0x00FF;
 	else
-		write(address, shift);
+		write(address, shift & 0x00FF);
 	return 0;
 }
 uint8_t Cpu::LSR()
 {
-	uint8_t carry = data & 0x01;
+	if (opcodes[currentOpcode].addressMode != &Cpu::ACC)
+		dataFetch();
+
 	uint8_t shift = data >> 1;
-	setFlag(C, carry > 0);
-	setFlag(Z, (shift == 0x00));
+	setFlag(C, (shift & 0xFF00) > 0);
+	setFlag(Z, (shift & 0x00FF) == 0x00);
 	setFlag(N, (shift & 0x80));
 	if (opcodes[currentOpcode].addressMode == &Cpu::ACC)
-		rA = shift;
+		rA = shift & 0x00FF;
 	else
-		write(address, shift);
+		write(address, shift & 0x00FF);
 	return 0;
 }
 uint8_t Cpu::ROL()
 {
+	if (opcodes[currentOpcode].addressMode != &Cpu::ACC)
+		dataFetch();
+
 	uint8_t carry = data & 0x80;
 	uint8_t shift = data << 1;
 	shift |= getFlag(C);
@@ -460,6 +465,9 @@ uint8_t Cpu::ROL()
 }
 uint8_t Cpu::ROR()
 {
+	if (opcodes[currentOpcode].addressMode != &Cpu::ACC)
+		dataFetch();
+
 	uint8_t carry = data & 0x01;
 	uint8_t shift = data >> 1;
 	shift |= getFlag(C) << 7;
@@ -475,6 +483,7 @@ uint8_t Cpu::ROR()
 //logic
 uint8_t Cpu::AND()
 {
+	dataFetch();
 	rA &= data;
 	setFlag(Z, (rA == 0x00));
 	setFlag(N, (rA & 0x80));
@@ -482,6 +491,7 @@ uint8_t Cpu::AND()
 }
 uint8_t Cpu::BIT()
 {
+	dataFetch();
 	setFlag(Z, ((rA & data) == 0x00));
 	setFlag(N, data & (1 << 7));
 	setFlag(V, data & (1 << 6));
@@ -489,6 +499,7 @@ uint8_t Cpu::BIT()
 }
 uint8_t Cpu::EOR()
 {
+	dataFetch();
 	rA ^= data;
 	setFlag(Z, (rA == 0x00));
 	setFlag(N, (rA & 0x80));
@@ -496,6 +507,7 @@ uint8_t Cpu::EOR()
 }
 uint8_t Cpu::ORA()
 {
+	dataFetch();
 	rA |= data;
 	setFlag(Z, (rA == 0x00));
 	setFlag(N, (rA & 0x80));
@@ -504,6 +516,7 @@ uint8_t Cpu::ORA()
 //arithmetic
 uint8_t Cpu::ADC()
 {
+	dataFetch();
 	uint16_t result = rA + data + getFlag(C);
 	setFlag(C, (result > 255) || (getFlag(D) && result > 99));
 	setFlag(V, (~(rA ^ data) & (rA ^ result)) & 0x0080);
@@ -514,6 +527,7 @@ uint8_t Cpu::ADC()
 }
 uint8_t Cpu::CMP()
 {
+	dataFetch();
 	uint16_t result = rA - data;
 	setFlag(C, data <= rA);
 	setFlag(Z, ((result & 0x00FF) == 0x00));
@@ -522,6 +536,7 @@ uint8_t Cpu::CMP()
 }
 uint8_t Cpu::CPX()
 {
+	dataFetch();
 	uint16_t result = rX - data;
 	setFlag(C, data <= rX);
 	setFlag(Z, ((result & 0x00FF) == 0x00));
@@ -530,6 +545,7 @@ uint8_t Cpu::CPX()
 }
 uint8_t Cpu::CPY()
 {
+	dataFetch();
 	uint16_t result = rY - data;
 	setFlag(C, data <= rY);
 	setFlag(Z, ((result & 0x00FF) == 0x00));
@@ -538,6 +554,7 @@ uint8_t Cpu::CPY()
 }
 uint8_t Cpu::SBC()
 {
+	dataFetch();
 	uint16_t result = rA + ~data + getFlag(C);
 	setFlag(C, (result > 255) || (getFlag(D) && result > 99));
 	setFlag(V, (~(rA ^ ~data) & (rA ^ result)) & 0x0080);
@@ -549,6 +566,7 @@ uint8_t Cpu::SBC()
 //Inc
 uint8_t Cpu::DEC()
 {
+	dataFetch();
 	uint8_t result = data - 1;
 	write(address, result);
 	setFlag(Z, (result == 0x00));
@@ -571,6 +589,7 @@ uint8_t Cpu::DEY()
 }
 uint8_t Cpu::INC()
 {
+	dataFetch();
 	uint8_t result = data + 1;
 	write(address, result);
 	setFlag(Z, (result == 0x00));
@@ -595,7 +614,7 @@ uint8_t Cpu::INY()
 uint8_t Cpu::BRK()
 {
 	setFlag(I, 1);
-	write(0x0100 + sp, pc & 0xFF00);
+	write(0x0100 + sp, (pc >> 8) & 0xFF00);
 	sp--;
 	write(0x0100 + sp, pc & 0x00FF);
 	sp--;
@@ -604,24 +623,24 @@ uint8_t Cpu::BRK()
 	setFlag(B, 0);
 	sp--;
 
-	pc++;
 
 	pc = read(0xFFFE) | (read(0xFFFF) << 8);
 	return 0;
 }
 uint8_t Cpu::JMP()
 {
-	pc = address;
+	pc = address -1;
 	return 0;
 }
 uint8_t Cpu::JSR()
 {
-	write(0x0100 + sp, (pc-1 >> 8) & 0x00FF);
+	
+	write(0x0100 + sp, ((pc)>> 8) & 0x00FF);
 	sp--;
-	write(0x0100 + sp, pc-1 & 0x00FF);
+	write(0x0100 + sp, (pc) & 0x00FF);
 	sp--;
 
-	pc = address - 1;
+	pc = address -1;
 	return 0;
 }
 uint8_t Cpu::RTI()
@@ -629,13 +648,13 @@ uint8_t Cpu::RTI()
 	sp++;
 	status = read(0x0100 + sp);
 
-
 	sp++;
 	uint8_t low = read(0x0100 + sp);
 	sp++;
 	uint8_t high = read(0x0100 + sp);
 
 	pc = (high << 8) | low;
+	pc--;
 	return 0;
 }
 uint8_t Cpu::RTS()
@@ -646,7 +665,7 @@ uint8_t Cpu::RTS()
 	uint8_t high = read(0x0100 + sp);
 
 	pc = (high << 8) | low;
-	pc++;
+	pc;
 	return 0;
 }
 //Bra
@@ -884,3 +903,4 @@ std::map<uint16_t, std::string> Cpu::disassemble(uint16_t nStart, uint16_t nStop
 
 	return mapLines;
 }
+  

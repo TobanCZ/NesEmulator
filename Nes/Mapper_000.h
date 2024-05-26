@@ -3,16 +3,13 @@
 class Mapper_000 :public Mapper
 {
 public:
-	using Mapper::Mapper;
+	Mapper_000(uint8_t prgBanks, uint8_t chrBanks);
+	~Mapper_000();
 
 public:
-	uint32_t CpuWrite(uint16_t address) override;
-	uint32_t CpuRead(uint16_t address) override;
-	uint32_t PpuWrite(uint16_t address) override;
-	uint32_t PpuRead(uint16_t address) override;
-
-private:
-	uint8_t PRGbanks = 0;
-	uint8_t CHRbanks = 0;
+	bool CpuWrite(uint16_t address , uint32_t& mapped_address, uint8_t data) override;
+	bool CpuRead(uint16_t address, uint32_t& mapped_address) override;
+	bool PpuWrite(uint16_t address, uint32_t& mapped_address) override;
+	bool PpuRead(uint16_t address, uint32_t& mapped_address) override;
 };
 

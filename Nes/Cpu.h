@@ -13,7 +13,7 @@ public:
 	~Cpu();
 
 public:
-	void connectBus(Bus *ptr);
+	void connectBus(Bus* ptr);
 
 public:
 	enum Flags
@@ -144,12 +144,14 @@ private:
 	void write(uint16_t address, uint8_t data);
 	uint8_t read(uint16_t address);
 
+	void dataFetch();
+
 	void setFlag(Flags flag, bool state);
 	
 
 
 private:
-	 Bus* bus = nullptr;
+	 Bus* bus;;
 	 uint8_t currentOpcode;
 
 	 struct OPCODE

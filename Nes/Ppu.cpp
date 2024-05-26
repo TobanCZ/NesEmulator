@@ -71,6 +71,11 @@ void Ppu::clock()
         if (cycle == 257)
             TransferAddressX();
 
+        if (cycle == 338 || cycle == 340)
+            bg_next_tile_id = PpuRead(0x2000 | (vram_addr.reg & 0x0FFF));
+        
+
+
         if (scanline == -1 && cycle >= 280 && cycle < 305)
             TransferAddressY();
         
@@ -101,7 +106,7 @@ void Ppu::clock()
         bg_palette = (bg_pal1 << 1) | bg_pal0;
     }
 
-    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bg_palette, bg_pixel));
+    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bg_pixel + bg_palette * 16));
 
     cycle++;
     if (cycle >= 341)
@@ -225,31 +230,34 @@ void Ppu::UpdateShifters()
 
 rndr::Sprite Ppu::GetPatternTable(uint8_t index)
 {
-    ///*for (uint16_t yTile = 0; yTile < 16; yTile++)
-    //{
-    //    for (uint16_t xTile = 0; xTile < 16; xTile++)
-    //    {
-    //        uint16_t offset = yTile * 256 + xTile * 16;
+    rndr::Sprite table(128,128);
+    for (uint16_t yTile = 0; yTile < 16; yTile++)
+    {
+        for (uint16_t xTile = 0; xTile < 16; xTile++)
+        {
+            uint16_t offset = yTile * 256 + xTile * 16;
 
-    //        for (uint16_t yPixel = 0; yPixel < 16; yPixel++)
-    //        {
-    //            uint8_t tile_lsb = PpuRead(index * 0x1000 + offset + yPixel);
-    //            uint8_t tile_msb = PpuRead(index * 0x1000 + offset + yPixel + 8);
+            for (uint16_t yPixel = 0; yPixel < 8; yPixel++)
+            {
+                uint8_t tile_lsb = PpuRead(index * 0x1000 + offset + yPixel);
+                uint8_t tile_msb = PpuRead(index * 0x1000 + offset + yPixel + 8);
 
-    //            for (uint16_t xPixel = 0; xPixel < 16; xPixel++)
-    //            {
-    //                uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
-    //                tile_lsb >>= 1; tile_msb >>= 1;
-    //            }
-    //        }
-    //    }
-    //}*/
-    return rndr::Sprite(128,128);
+                for (uint16_t xPixel = 0; xPixel < 8; xPixel++)
+                {
+                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+                    tile_lsb >>= 1; 
+                    tile_msb >>= 1;
+                    table.SetPixel(xTile * 8 + (7 - xPixel), yTile * 8 + yPixel, GetColourFromPaletteRam(pixel));
+                }
+            }
+        }
+    }
+    return table;
 }
 
-rndr::Pixel Ppu::GetColourFromPaletteRam(uint8_t palette, uint8_t pixel)
+rndr::Pixel Ppu::GetColourFromPaletteRam(uint8_t pixel)
 {
-    return colorPallet[PpuRead(0x3F00 + (palette << 2) + pixel) & 0x3F];
+    return colorPallet[PpuRead(0x3F00 + pixel) & 0x3F];
 }
 
 void Ppu::CpuWrite(uint16_t address, uint8_t data)
@@ -287,19 +295,19 @@ void Ppu::CpuWrite(uint16_t address, uint8_t data)
     case 0x0006:
         if (adress_latch == 0)
         {
-            tram_addr.reg = (tram_addr.reg & 0x00FF) | (data << 8);
+            tram_addr.reg = ((data & 0x3F) << 8) | (tram_addr.reg & 0x00FF);
             adress_latch = 1;
         }
         else
         {
-            tram_addr.reg = (tram_addr.reg & 0x00FF) | data;
+            tram_addr.reg = (tram_addr.reg & 0xFF00) | data;
             vram_addr = tram_addr;
             adress_latch = 0;
         }
         break;
     case 0x0007:
-        PpuWrite(address,data);
-        vram_addr.reg++;
+        PpuWrite(vram_addr.reg,data);
+        vram_addr.reg += (control.increment_mode ? 32: 1);
         break;
     }
 }
@@ -307,45 +315,71 @@ void Ppu::CpuWrite(uint16_t address, uint8_t data)
 uint8_t Ppu::CpuRead(uint16_t address, bool readOnly)
 {
     uint8_t data = 0x00;
-
-    switch (address)
+    if (readOnly)
     {
-    case 0x0000:
-        break;
-    case 0x0001:
-        break;
-    case 0x0002:
-        data = (status.reg & 0xE0) | (ppu_data_buffer & 0x1F);
-        status.vertical_blank = 0;
-        adress_latch = 0;
-        break;
-    case 0x0003:
-        break;
-    case 0x0004:
-        break;
-    case 0x0005:
-        break;
-    case 0x0006:
-        break;
-    case 0x0007:
-        data = ppu_data_buffer;
-        ppu_data_buffer = PpuRead(address);
-
-        if (vram_addr.reg > 0x3F00)
-            data = ppu_data_buffer;
-        vram_addr.reg += (control.increment_mode ? 32 : 1);
-        break;
+        switch (address)
+        {
+        case 0x0000: // Control
+            data = control.reg;
+            break;
+        case 0x0001: // Mask
+            data = mask.reg;
+            break;
+        case 0x0002: // Status
+            data = status.reg;
+            break;
+        case 0x0003: // OAM Address
+            break;
+        case 0x0004: // OAM Data
+            break;
+        case 0x0005: // Scroll
+            break;
+        case 0x0006: // PPU Address
+            break;
+        case 0x0007: // PPU Data
+            break;
+        }
     }
+    else
+    {
+        switch (address)
+        {
+        case 0x0000:
+            break;
+        case 0x0001:
+            break;
+        case 0x0002:
+            data = status.reg;
+            status.vertical_blank = 0;
+            adress_latch = 0;
+            break;
+        case 0x0003:
+            break;
+        case 0x0004:
+            break;
+        case 0x0005:
+            break;
+        case 0x0006:
+            break;
+        case 0x0007:
+            data = ppu_data_buffer;
+            ppu_data_buffer = PpuRead(vram_addr.reg);
 
+            if (vram_addr.reg >= 0x3F00)
+                data = ppu_data_buffer;
+            vram_addr.reg += (control.increment_mode ? 32 : 1);
+            break;
+        }
+    }
     return data;
 }
 
 void Ppu::PpuWrite(uint16_t address, uint8_t data)
 {
-    if (address >= 0x0000 && address <= 0x1FFF)
-    {
-        cartrige->PpuWrite(address, data);
-    }
+    address &= 0x3FFF;
+
+    if (cartrige->PpuWrite(address, data))
+    {}
     else if (address >= 0x0000 && address <= 0x1FFF)
     {
         pattern[(((address & 0x1000) >> 12) * 4048) + address & 0x0FFF] = data;
@@ -392,10 +426,8 @@ uint8_t Ppu::PpuRead(uint16_t address)
     uint8_t data = 0x00;
     address &= 0x3FFF;
 
-    if (address >= 0x0000 && address <= 0x1FFF)
-    {
-        data = cartrige->PpuRead(address);
-    }
+    if (cartrige->PpuRead(address,data))
+    {}
     else if (address >= 0x0000 && address <= 0x1FFF)
     {
         data = pattern[(((address & 0x1000) >> 12) * 4048) + address & 0x0FFF];

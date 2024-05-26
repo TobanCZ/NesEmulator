@@ -3,6 +3,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include <memory>
+#include "Bus.h"
 #include "Cpu.h"
 #include "Ppu.h"
 #include <string>
@@ -14,23 +15,16 @@
 
 char* hex(uint32_t n, uint8_t d);
 char* combineChar(char* first, const char* second);
-SDL_Texture* CreateTextureFromSprite(SDL_Renderer* renderer, const rndr::Sprite& sprite);
+
 void DrawColoredSquare(ImDrawList* draw_list, const ImVec2& pos, const ImVec2& size, ImU32 color) {
     draw_list->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), color);
 }
 
 
-Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event), void (*resetCallback)())
+Gui::Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Bus* bus, void (*eventCallback)(SDL_Event* event), void (*resetCallback)())
+    : window(window), renderer(renderer), width(width), height(height), bus(bus), eventCallback(eventCallback), resetCallback(resetCallback), singleStep(true)
 {
-	this->window = window;
-	this->renderer = renderer;
-    this->width = width;
-    this->height = height;
-    this->cpu = cpu;
-    this->ppu = ppu;
-    this->eventCallback = eventCallback;
-    this->resetCallback = resetCallback;
-	Init();
+    Init();
 }
 
 Gui::~Gui()
@@ -52,7 +46,31 @@ void Gui::Init()
     ImGui::StyleColorsDark();
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
-    disassembler = cpu->disassemble(0x0000,0xFFFF);
+    disassembler = bus->cpu.disassemble(0x0000,0xFFFF);
+
+    for (int i = 0; i < palletTexture.size(); i++)
+    {
+        palletTexture[i] = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 1, 1);
+        if (palletTexture[i] == NULL)
+        {
+            SDL_Log("Unable to create pallet texture: %s", SDL_GetError());
+            return;
+        }
+    }
+
+    patternTable0Texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 128, 128);
+    if (patternTable0Texture == NULL)
+    {
+        SDL_Log("Unable to create pattern 0 texture: %s", SDL_GetError());
+        return;
+    }
+
+    patternTable1Texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, 128, 128);
+    if (patternTable1Texture == NULL)
+    {
+        SDL_Log("Unable to create pattern 1 texture: %s", SDL_GetError());
+        return;
+    }
 }
 
 void Gui::Render(std::shared_ptr<bool> isRunning)
@@ -121,50 +139,79 @@ void Gui::showCPU(bool* p_open)
     {
         ImGui::Text("Flags: ");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::C) ? green : red, "C");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::C) ? green : red, "C");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::Z) ? green : red, "Z");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::Z) ? green : red, "Z");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::I) ? green : red, "I");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::I) ? green : red, "I");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::D) ? green : red, "D");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::D) ? green : red, "D");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::B) ? green : red, "B");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::B) ? green : red, "B");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::U) ? green : red, "U");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::U) ? green : red, "U");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::V) ? green : red, "V");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::V) ? green : red, "V");
         ImGui::SameLine();
-        ImGui::TextColored(cpu->getFlag(Cpu::N) ? green : red, "N");
+        ImGui::TextColored(bus->cpu.getFlag(Cpu::N) ? green : red, "N");
 
         ImGui::Text("srogram sounter:");
         ImGui::SameLine();
-        ImGui::Text(hex(cpu->pc,4));
+        ImGui::Text(hex(bus->cpu.pc,4));
 
         ImGui::Text("rA:");
         ImGui::SameLine();
-        ImGui::Text(hex(cpu->rA,2));
+        ImGui::Text(hex(bus->cpu.rA,2));
 
         ImGui::Text("rX:");
         ImGui::SameLine();
-        ImGui::Text(hex(cpu->rX,2));
+        ImGui::Text(hex(bus->cpu.rX,2));
 
         ImGui::Text("rY:");
         ImGui::SameLine();
-        ImGui::Text(hex(cpu->rY,2));
+        ImGui::Text(hex(bus->cpu.rY,2));
 
         ImGui::Text("stack pointer:");
         ImGui::SameLine();
-        ImGui::Text(hex(cpu->sp,2));
+        ImGui::Text(hex(bus->cpu.sp,2));
     }
     ImGui::End();
 }
 
 void Gui::showRAM(bool* p_open)
 {
-    ImGui::SetNextWindowSize(ImVec2(200, 150), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(700, 700), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("RAM", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
     {
+        static int bytes_per_row = 16;
+        if (ImGui::BeginTable("hexTable", bytes_per_row + 1, ImGuiTableFlags_Borders))
+        {
+            // Header
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Offset");
+            for (int i = 0; i < bytes_per_row; ++i)
+            {
+                ImGui::TableNextColumn();
+                ImGui::Text(hex(i,2));
+            }
+
+            // Data
+            for (size_t row = 0; row < bus->ram.size() / bytes_per_row; ++row)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text(hex(row * bytes_per_row,6));
+
+                for (int col = 0; col < bytes_per_row; ++col)
+                {
+                    ImGui::TableNextColumn();
+                    ImGui::Text(hex(bus->ram[row * bytes_per_row + col],2));
+                }
+            }
+
+            ImGui::EndTable();
+        }
     }
     ImGui::End();
 }
@@ -176,7 +223,7 @@ void Gui::showAssembly(bool* p_open, int lines)
     if (ImGui::Begin("Assembly", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
     {
         int half_lines = lines / 2;
-        auto temp = disassembler.lower_bound(cpu->pc);
+        auto temp = disassembler.lower_bound(bus->cpu.pc);
 
         for (int i = 0; i < half_lines; i++)
             --temp;
@@ -210,78 +257,88 @@ void Gui::showPPU(bool* p_open)
     {
         ImGui::Text("Control: ");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.enable_nmi? green : red, "NMI");
+        ImGui::Text(hex(bus->ppu.control.reg,2));
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.increment_mode ? green : red, "increment");
+        ImGui::TextColored(bus->ppu.control.enable_nmi? green : red, "NMI");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.nametable_x ? green : red, "nameX");
+        ImGui::TextColored(bus->ppu.control.increment_mode ? green : red, "increment");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.nametable_y ? green : red, "nameY");
+        ImGui::TextColored(bus->ppu.control.nametable_x ? green : red, "nameX");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.pattern_background? green : red, "patternBG");
+        ImGui::TextColored(bus->ppu.control.nametable_y ? green : red, "nameY");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.pattern_sprite ? green : red, "patternSP");
+        ImGui::TextColored(bus->ppu.control.pattern_background? green : red, "patternBG");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.slave_mode ? green : red, "slave");
+        ImGui::TextColored(bus->ppu.control.pattern_sprite ? green : red, "patternSP");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->control.sprite_size ? green : red, "SPsize");
+        ImGui::TextColored(bus->ppu.control.slave_mode ? green : red, "slave");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->ppu.control.sprite_size ? green : red, "SPsize");
 
         ImGui::Text("Mask: ");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.render_sprites ? green : red, "renderSP");
+        ImGui::Text(hex(bus->ppu.mask.reg, 2));
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.render_background ? green : red, "renderBG");
+        ImGui::TextColored(bus->ppu.mask.render_sprites ? green : red, "renderSP");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.render_sprites_left ? green : red, "renderSPL");
+        ImGui::TextColored(bus->ppu.mask.render_background ? green : red, "renderBG");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.render_background_left ? green : red, "renderBGL");
+        ImGui::TextColored(bus->ppu.mask.render_sprites_left ? green : red, "renderSPL");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.grayscale ? green : red, "grayscale");
+        ImGui::TextColored(bus->ppu.mask.render_background_left ? green : red, "renderBGL");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.enchance_red ? green : red, "eR");
+        ImGui::TextColored(bus->ppu.mask.grayscale ? green : red, "grayscale");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.enchance_green ? green : red, "eG");
+        ImGui::TextColored(bus->ppu.mask.enchance_red ? green : red, "eR");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->mask.enchance_blue ? green : red, "eB");
+        ImGui::TextColored(bus->ppu.mask.enchance_green ? green : red, "eG");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->ppu.mask.enchance_blue ? green : red, "eB");
 
         ImGui::Text("Status: ");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->status.sprite_overflow ? green : red, "SPoverflow");
+        ImGui::Text(hex(bus->ppu.status.reg, 2));
         ImGui::SameLine();
-        ImGui::TextColored(ppu->status.sprite_zero_hit ? green : red, "SPzeroHit");
+        ImGui::TextColored(bus->ppu.status.sprite_overflow ? green : red, "SPoverflow");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->status.vertical_blank ? green : red, "VB");
+        ImGui::TextColored(bus->ppu.status.sprite_zero_hit ? green : red, "SPzeroHit");
         ImGui::SameLine();
-        ImGui::TextColored(ppu->status.unused ? green : red, "U");
+        ImGui::TextColored(bus->ppu.status.vertical_blank ? green : red, "VB");
+        ImGui::SameLine();
+        ImGui::TextColored(bus->ppu.status.unused ? green : red, "U");
 
+        ImGui::Text("Addr: ");
+        ImGui::SameLine();
+        ImGui::Text(hex(bus->ppu.vram_addr.reg, 4));
 
-        rndr::Sprite idk(100,100,std::vector<rndr::Pixel>(100*100,rndr::Pixel(255,0,0,1)));
+        ImGui::Spacing();
 
+        UpdatePalletTexture();
+        UpdatePatternTexture();
 
         ImGui::Columns(2, nullptr, false);
 
-        ImGui::Spacing();
         ImGui::Text("Pattern table 0:");
-        ImGui::Image(CreateTextureFromSprite(renderer, idk), ImVec2(100, 100));
+        ImGui::Image(patternTable0Texture, ImVec2(300, 300));
 
         ImGui::NextColumn();
-
-        ImGui::Spacing();
+        
         ImGui::Text("Pattern table 1:");
-
-        ImGui::Image(CreateTextureFromSprite(renderer, idk), ImVec2(100, 100));
-
+        ImGui::Image(patternTable1Texture, ImVec2(300, 300));
         ImGui::Columns(1);
-
-        ImVec2 cursor_pos = ImGui::GetCursorScreenPos();
-        ImVec2 squareSize(20, 20);
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        ImVec2 pos(cursor_pos.x + (squareSize.x + ImGui::GetStyle().ItemSpacing.x), cursor_pos.y);
-        DrawColoredSquare(draw_list, pos, squareSize, rndr::Pixel(255, 0, 0, 1).hex);
-        ImGui::NextColumn();
-       
-
-        //ImGui::Colo
+        ImGui::Spacing();
+        ImGui::Text("Pallets:");
+        ImGui::Columns(4,nullptr, false);
+        for (int i = 0; i < palletTexture.size(); i+=4)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                ImGui::Image(palletTexture[i+j], ImVec2(20, 20));
+                if(j != 3)
+                    ImGui::SameLine();
+            }
+            ImGui::NextColumn();
+        }
     }
     ImGui::End();
 }
@@ -307,21 +364,67 @@ char* combineChar(char* first, const char* second)
     return result;
 }
 
-SDL_Texture* CreateTextureFromSprite(SDL_Renderer* renderer, const rndr::Sprite& sprite)
+void Gui::UpdatePalletTexture()
 {
-    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, sprite.width, sprite.height);
-    if (!texture) {
-        return nullptr;
+    for (int i = 0; i < palletTexture.size(); i++)
+    {
+        rndr::Pixel pixel = bus->ppu.GetColourFromPaletteRam(i);
+        void* pixels = nullptr;
+        int pitch = 0;
+        SDL_LockTexture(palletTexture[i], NULL, &pixels, &pitch);
+        uint8_t* dst = static_cast<uint8_t*>(pixels);
+        dst[0] = pixel.r;
+        dst[1] = pixel.g;
+        dst[2] = pixel.b;
+        dst[3] = pixel.a;
+        SDL_UnlockTexture(palletTexture[i]);
+    }
+}
+
+void Gui::UpdatePatternTexture()
+{
+    rndr::Sprite table0 = bus->ppu.GetPatternTable(0);
+    rndr::Sprite table1 = bus->ppu.GetPatternTable(1);
+
+    void* pixels = nullptr;
+    int pitch = table0.width*4;
+
+    SDL_LockTexture(patternTable0Texture, NULL, &pixels, &pitch);
+
+    uint8_t* dst = static_cast<uint8_t*>(pixels);
+    for (int y = 0; y < table0.height; y++)
+    {
+        for (int x = 0; x < table0.width; x++)
+        {
+            const rndr::Pixel& pixel = table0.pixels[y * table0.width + x];
+            dst[y * 4 * 128 + x * 4 + 0] = pixel.r;
+            dst[y * 4 * 128 + x * 4 + 1] = pixel.g;
+            dst[y * 4 * 128 + x * 4 + 2] = pixel.b;
+            dst[y * 4 * 128 + x * 4 + 3] = pixel.a;
+        }
     }
 
-    std::vector<uint32_t> pixelData(sprite.width * sprite.height);
-    for (size_t i = 0; i < sprite.pixels.size(); ++i) {
-        const rndr::Pixel& pixel = sprite.pixels[i];
-        pixelData[i] = (pixel.r << 24) | (pixel.g << 16) | (pixel.b << 8) | pixel.a;
+    SDL_UnlockTexture(patternTable0Texture);
+
+    pixels = nullptr;
+    pitch = table1.width * 4;
+
+    SDL_LockTexture(patternTable1Texture, NULL, &pixels, &pitch);
+
+    dst = static_cast<uint8_t*>(pixels);
+    for (int y = 0; y < table1.height; y++)
+    {
+        for (int x = 0; x < table1.width; x++)
+        {
+            const rndr::Pixel& pixel = table1.pixels[y * table0.width + x];
+            dst[y * 4 * 128 + x * 4 + 0] = pixel.r;
+            dst[y * 4 * 128 + x * 4 + 1] = pixel.g;
+            dst[y * 4 * 128 + x * 4 + 2] = pixel.b;
+            dst[y * 4 * 128 + x * 4 + 3] = pixel.a;
+        }
     }
 
-    SDL_UpdateTexture(texture, nullptr, pixelData.data(), sprite.width * sizeof(uint32_t));
-    return texture;
+    SDL_UnlockTexture(patternTable1Texture);
 }
 
 void Gui::Clean()

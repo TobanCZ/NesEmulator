@@ -4,13 +4,14 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include <memory>
+#include "Bus.h"
 #include "Cpu.h"
 #include "Ppu.h"
 
 class Gui
 {
 public:
-	Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Cpu* cpu, Ppu* ppu, void (*eventCallback)(SDL_Event* event), void (*resetCallback)());
+	Gui(SDL_Window* window, SDL_Renderer* renderer, int width, int height, Bus* bus, void (*eventCallback)(SDL_Event* event), void (*resetCallback)());
 	~Gui();
 
 public:
@@ -27,8 +28,12 @@ private:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	ImGuiIO* io;
-	Cpu* cpu;
-	Ppu* ppu;
+	Bus* bus = nullptr;
+	std::array<SDL_Texture*, 32> palletTexture;
+	SDL_Texture* patternTable0Texture;
+	SDL_Texture* patternTable1Texture;
+	void UpdatePalletTexture();
+	void UpdatePatternTexture();
 private:
 	void showCPU(bool* p_open);
 	void showRAM(bool* p_open);

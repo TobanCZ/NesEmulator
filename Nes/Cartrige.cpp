@@ -25,7 +25,10 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
         ifs.read((char*)mPRG.data(), mPRG.size());
 
         CHRbanks = header.CHRsize;
-        mCHR.resize(CHRbanks * 8192);
+        if(CHRbanks == 0)
+            mCHR.resize(8192);
+        else
+            mCHR.resize(CHRbanks * 8192);
         ifs.read((char*)mCHR.data(), mCHR.size());
     }
 
@@ -42,22 +45,49 @@ Cartrige::~Cartrige()
 {
 }
 
-void Cartrige::CpuWrite(uint16_t address, uint8_t data)
+bool Cartrige::CpuWrite(uint16_t address, uint8_t data)
 {
-    mPRG[mapper->CpuWrite(address)] = data;
+    uint32_t mapped_addr = 0;
+    if (mapper->CpuWrite(address, mapped_addr, data))
+    {
+        mPRG[mapped_addr] = data;
+        return true;
+    }
+    else
+        return false;
 }
 
-uint8_t Cartrige::CpuRead(uint16_t address)
+bool Cartrige::CpuRead(uint16_t address, uint8_t& data)
 {
-    return mPRG[mapper->CpuRead(address)];
+    uint32_t mapped_addr = 0;
+    if (mapper->CpuRead(address, mapped_addr))
+    {
+        data = mPRG[mapped_addr];
+        return true;
+    }
+    else
+        return false;
+}
+bool Cartrige::PpuWrite(uint16_t address, uint8_t data)
+{
+    uint32_t mapped_addr = 0;
+    if (mapper->PpuWrite(address, mapped_addr))
+    {
+        mCHR[mapped_addr] = data;
+        return true;
+    }
+    else
+        return false;
 }
 
-void Cartrige::PpuWrite(uint16_t address, uint8_t data)
+bool Cartrige::PpuRead(uint16_t address, uint8_t& data)
 {
-    mCHR[mapper->PpuWrite(address)] = data;
-}
-
-uint8_t Cartrige::PpuRead(uint16_t address)
-{
-    return mCHR[mapper->PpuRead(address)];
+    uint32_t mapped_addr = 0;
+    if (mapper->PpuRead(address, mapped_addr))
+    {
+        data = mCHR[mapped_addr];
+        return true;
+    }
+    else
+        return false;
 }

@@ -22,8 +22,6 @@ public:
 private:
 	std::shared_ptr<Cartrige> cartrige;
 	std::vector<rndr::Pixel> colorPallet;
-	rndr::Sprite GetPatternTable(uint8_t index);
-	rndr::Pixel GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
 
 public:
 	void CpuWrite(uint16_t address, uint8_t data);
@@ -31,6 +29,28 @@ public:
 
 	void PpuWrite(uint16_t address, uint8_t data);
 	uint8_t PpuRead(uint16_t address);
+
+	rndr::Sprite GetPatternTable(uint8_t index);
+	rndr::Pixel GetColourFromPaletteRam(uint8_t pixel);
+
+	union loopy_register
+	{
+		struct
+		{
+
+			uint16_t coarse_x : 5;
+			uint16_t coarse_y : 5;
+			uint16_t nametable_x : 1;
+			uint16_t nametable_y : 1;
+			uint16_t fine_y : 3;
+			uint16_t unused : 1;
+		};
+
+		uint16_t reg = 0x0000;
+	};
+
+	loopy_register vram_addr;
+	loopy_register tram_addr;
 
 	void Reset();
 
@@ -90,24 +110,7 @@ private:
 	uint8_t adress_latch = 0x00;
 	uint8_t ppu_data_buffer = 0x00;
 
-	union loopy_register
-	{
-		struct
-		{
 
-			uint16_t coarse_x : 5;
-			uint16_t coarse_y : 5;
-			uint16_t nametable_x : 1;
-			uint16_t nametable_y : 1;
-			uint16_t fine_y : 3;
-			uint16_t unused : 1;
-		};
-
-		uint16_t reg = 0x0000;
-	};
-
-	loopy_register vram_addr; 
-	loopy_register tram_addr;
 
 	uint8_t fine_x = 0x00;
 
