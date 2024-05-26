@@ -69,7 +69,10 @@ void Ppu::clock()
             IncrementScrollY();
 
         if (cycle == 257)
+        {
+            LoadBackgroundShifters();
             TransferAddressX();
+        }
 
         if (cycle == 338 || cycle == 340)
             bg_next_tile_id = PpuRead(0x2000 | (vram_addr.reg & 0x0FFF));

@@ -21,7 +21,7 @@ public: //funkce
 	void CpuWrite(uint16_t address, uint8_t data);
 	uint8_t CpuRead(uint16_t address, bool readOnly = false);
 
-	std::array<uint8_t,2> controller;
+	uint8_t controller[2];
 
 public: //system
 	void insertCartrige(const std::shared_ptr<Cartrige>& cartrige);
@@ -32,6 +32,6 @@ private:
 	uint32_t clockCount;
 	uint32_t nSystemClockCounter = 0;
 
-	std::array<uint8_t, 2> controller_state;
+	uint8_t controller_state[2];
 };
 

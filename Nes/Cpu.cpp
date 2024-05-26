@@ -127,7 +127,7 @@ void Cpu::irq()
 {
 	if (getFlag(I) == 0)
 	{
-		write(0x0100 + sp, pc & 0xFF00);
+		write(0x0100 + sp, (pc >> 8) & 0x00FF);
 		sp--;
 		write(0x0100 + sp, pc & 0x00FF);
 		sp--;
@@ -148,7 +148,7 @@ void Cpu::irq()
 
 void Cpu::nmi()
 {
-	write(0x0100 + sp, pc & 0xFF00);
+	write(0x0100 + sp, (pc >> 8) & 0x00FF);
 	sp--;
 	write(0x0100 + sp, pc & 0x00FF);
 	sp--;
@@ -295,7 +295,8 @@ uint8_t Cpu::REL()
 {
 	pc++;	
 	addressRel = read(pc);
-
+	if (addressRel & 0x80)
+		addressRel |= 0xFF00;
 	return 0;
 }
 
@@ -691,7 +692,13 @@ uint8_t Cpu::BEQ()
 {
 	if (getFlag(Z))
 	{
-		pc = addressRel + pc;
+		cycles++;
+		address = pc + addressRel;
+
+		if ((address & 0xFF00) != (pc & 0xFF00))
+			cycles++;
+
+		pc = address;
 		return 1;
 	}
 	return 0;

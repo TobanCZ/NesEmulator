@@ -7,6 +7,7 @@
 #include "Bus.h"
 #include "Cpu.h"
 #include "Ppu.h"
+#include <wtypes.h>
 
 class Gui
 {
@@ -19,7 +20,7 @@ public:
 	void Clean();
 	int width; 
 	int height;
-	bool singleStep = true;
+	bool singleStep = false;
 	std::map<uint16_t, std::string> disassembler;
 private:
 	void (*eventCallback)(SDL_Event* event);
@@ -35,6 +36,7 @@ private:
 	void UpdatePalletTexture();
 	void UpdatePatternTexture();
 private:
+	bool OpenFileDialog(wchar_t* filePath, DWORD filePathSize);
 	void showCPU(bool* p_open);
 	void showRAM(bool* p_open);
 	void showAssembly(bool* p_open, int lines);

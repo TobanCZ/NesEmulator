@@ -12,12 +12,22 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
+#include <windows.h>
+#include <commdlg.h>
+#include <locale>
+#include <codecvt>
+
 
 char* hex(uint32_t n, uint8_t d);
 char* combineChar(char* first, const char* second);
 
 void DrawColoredSquare(ImDrawList* draw_list, const ImVec2& pos, const ImVec2& size, ImU32 color) {
     draw_list->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), color);
+}
+
+std::string WCharToString(const wchar_t* wstr) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.to_bytes(wstr);
 }
 
 
@@ -106,7 +116,18 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     {
         if (ImGui::BeginMenu("File"))
         {
-            if (ImGui::MenuItem("Load")) {}
+            if (ImGui::MenuItem("Load")) 
+            {
+                wchar_t filePath[260];
+
+                if (OpenFileDialog(filePath, sizeof(filePath) / sizeof(filePath[0]))) {
+                    std::string filePathStr = WCharToString(filePath);
+                    std::cout << "Vybrany soubor: " << filePathStr << std::endl;
+                }
+                else {
+                    std::cout << "Zadny soubor nebyl vybran nebo doslo k chybe." << std::endl;
+                }
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Tools"))
@@ -123,10 +144,32 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     }
 
 
-    ImGui::ShowDemoWindow();
     ImGui::Render();
     SDL_RenderSetScale(renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
+}
+
+bool Gui::OpenFileDialog(wchar_t* filePath, DWORD filePathSize) {
+    OPENFILENAMEW ofn;
+    wchar_t szFile[260] = { 0 };
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
+    ofn.lpstrFilter = L"NES Files\0*.nes\0All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    if (GetOpenFileNameW(&ofn) == TRUE) {
+        wcsncpy_s(filePath, filePathSize, ofn.lpstrFile, _TRUNCATE);
+        return true;
+    }
+    return false;
 }
 
 void Gui::showCPU(bool* p_open)
@@ -310,6 +353,14 @@ void Gui::showPPU(bool* p_open)
         ImGui::Text("Addr: ");
         ImGui::SameLine();
         ImGui::Text(hex(bus->ppu.vram_addr.reg, 4));
+
+        ImGui::Text("Scanline: ");
+        ImGui::SameLine();
+        ImGui::Text(std::to_string(bus->ppu.scanline).c_str());
+
+        ImGui::Text("Cycle: ");
+        ImGui::SameLine();
+        ImGui::Text(std::to_string(bus->ppu.cycle).c_str());
 
         ImGui::Spacing();
 

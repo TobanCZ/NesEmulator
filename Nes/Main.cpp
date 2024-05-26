@@ -50,7 +50,7 @@ void Update()
 	if (!gui->singleStep)
 	{
 		do { 
-			if (nes->cpu.pc == 0xFFFF)
+			if (nes->cpu.pc == 0xFFFF) 
 			{
 				gui->singleStep = true;
 				break;
@@ -68,15 +68,17 @@ void Update()
 
 void Event(SDL_Event* event)
 {
-	if (gui->singleStep)
+	
+	if (event->type == SDL_KEYDOWN)
 	{
-		if (event->type == SDL_KEYDOWN)
+		if (gui->singleStep)
 		{
+
 			if (event->key.keysym.sym == SDLK_c)
 			{
-				while (nes->cpu.complete()){ nes->clock(); }
+				while (nes->cpu.complete()) { nes->clock(); }
 				do { nes->clock(); } while (!nes->cpu.complete());
-				
+
 			}
 			if (event->key.keysym.sym == SDLK_v)
 			{
@@ -89,20 +91,25 @@ void Event(SDL_Event* event)
 				for (int i = 0; i < 100; i++)
 				{
 					do { nes->clock(); } while (!nes->cpu.complete());
-					
+
 				}
 			}
-
-			nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_UP ? 0x08 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_RIGHT ? 0x01 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_LEFT ? 0x02 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_s ? 0x20 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_d ? 0x10 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_KP_ENTER ? 0x40 : 0x00;
-			nes->controller[0] |= event->key.keysym.sym == SDLK_RSHIFT ? 0x80 : 0x00;
 		}
+
+		if (event->key.keysym.sym == SDLK_DOWN)
+		{
+			nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
+		}
+		nes->controller[0] |= event->key.keysym.sym == SDLK_DOWN ? 0x04 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_UP ? 0x08 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_RIGHT ? 0x01 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_LEFT ? 0x02 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_s ? 0x20 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_d ? 0x10 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_KP_ENTER ? 0x40 : 0x00;
+		nes->controller[0] |= event->key.keysym.sym == SDLK_RSHIFT ? 0x80 : 0x00;
 	}
+
 }
 
 void Render(rndr::Renderer* renderer)

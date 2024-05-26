@@ -59,6 +59,7 @@ public:
 	void clock();
 
 	int16_t scanline = 0;
+	int16_t cycle = 0;
 
 	union
 	{
@@ -105,8 +106,6 @@ public:
 	} control;
 
 private:
-	int16_t cycle = 0;
-
 	uint8_t adress_latch = 0x00;
 	uint8_t ppu_data_buffer = 0x00;
 
