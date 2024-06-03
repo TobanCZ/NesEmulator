@@ -50,6 +50,7 @@ void Gui::Init()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     io = &ImGui::GetIO(); (void)io;
+    io->IniFilename = NULL;
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
     io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();

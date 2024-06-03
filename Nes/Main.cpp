@@ -7,8 +7,7 @@
 #include <string>
 #include <memory>
 #include "Gui.h"
-#undef main
-
+#define main SDL_main
 
 void Update(Uint32 elapsed);
 void Render(rndr::Renderer* rnd);
@@ -28,7 +27,7 @@ bool isKeyPressed(SDL_Keycode key) {
 	return state[SDL_GetScancodeFromKey(key)] != 0;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	nes = std::make_unique<Bus>();
 	cartige = std::make_shared<Cartrige>("");
@@ -52,7 +51,7 @@ void Reset()
 	nes->reset();
 }
 
-void Update(Uint32 elapsed)
+void Update(Uint32 elapsed) //main loop
 {
 	nes->controller[0] = 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_DOWN) ? 0x04 : 0x00;

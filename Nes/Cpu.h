@@ -163,7 +163,5 @@ private:
 	 };
 
 	 std::vector<OPCODE> opcodes;
-
-	
 };
 
