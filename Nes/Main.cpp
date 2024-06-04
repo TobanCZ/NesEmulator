@@ -62,16 +62,30 @@ void Update(Uint32 elapsed) //main loop
 	nes->controller[0] |= isKeyPressed(SDLK_s) ? 0x10 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_z) ? 0x40 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_x) ? 0x80 : 0x00;
+
+
+
 	if (!gui->singleStep)
 	{
 		if (fResidualTime > 0.0f)
 			fResidualTime -= elapsed;
 		else
 		{
+
 			fResidualTime += (1.0f / 60.0f) - elapsed;
-			do { nes->clock(); } while (!nes->ppu.frame_complete);
+			do { 
+				nes->clock(); 
+
+				/*if (nes->cpu.pc == 0xDBB5)
+				{
+					gui->singleStep = true;
+					break;
+				}*/
+
+			} while (!nes->ppu.frame_complete);
 			nes->ppu.frame_complete = false;
 		}
+		
 	}
 	
 }
@@ -86,8 +100,8 @@ void Event(SDL_Event* event)
 
 			if (event->key.keysym.sym == SDLK_c)
 			{
-				while (nes->cpu.complete()) { nes->clock(); }
-				do { nes->clock(); } while (!nes->cpu.complete());
+				while (nes->cpu.complete()) { nes->clock(gui.get()); }
+				do { nes->clock(gui.get()); } while (!nes->cpu.complete());
 
 			}
 			if (event->key.keysym.sym == SDLK_v)
@@ -100,7 +114,7 @@ void Event(SDL_Event* event)
 			{
 				for (int i = 0; i < 100; i++)
 				{
-					do { nes->clock(); } while (!nes->cpu.complete());
+					do { nes->clock(gui.get()); } while (!nes->cpu.complete());
 
 				}
 			}

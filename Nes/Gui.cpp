@@ -81,6 +81,8 @@ void Gui::Init()
         SDL_Log("Unable to create pattern 1 texture: %s", SDL_GetError());
         return;
     }
+
+    log.reserve(1000000);
 }
 
 void Gui::Render(std::shared_ptr<bool> isRunning)
@@ -107,6 +109,7 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     static bool show_Assembly = false;
     static bool show_PPU = false;
     static bool show_Controller = false;
+    static bool show_Log = false;
 
     if (disassembler.empty())
         show_Assembly = false;
@@ -116,6 +119,7 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     if (show_Assembly) showAssembly(&show_Assembly, 33);
     if (show_PPU) showPPU(&show_PPU);
     if (show_Controller) showController(&show_Controller);
+    if (show_Log) showLog(&show_Log);
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -140,12 +144,13 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
         }
         if (ImGui::BeginMenu("Tools"))
         {
-            if (ImGui::MenuItem("Reset")) { bus->reset(); };
+            if (ImGui::MenuItem("Reset")) { bus->reset(); this->resetLog(); };
             ImGui::MenuItem("CPU", NULL, &show_CPU);
             ImGui::MenuItem("RAM", NULL, &show_RAM);
             ImGui::MenuItem("PPU", NULL, &show_PPU);
             ImGui::MenuItem("Assembly", NULL, &show_Assembly);
             ImGui::MenuItem("Controller", NULL, &show_Controller);
+            ImGui::MenuItem("Log", NULL, &show_Log);
             ImGui::Checkbox("SingleStep", &singleStep);
             ImGui::EndMenu();
         }
@@ -179,6 +184,19 @@ bool Gui::OpenFileDialog(wchar_t* filePath, DWORD filePathSize) {
         return true;
     }
     return false;
+}
+
+void Gui::showLog(bool* p_open)
+{  
+    ImGui::SetNextWindowSize(ImVec2(300, 800), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Log", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings))
+    {
+        for (int i = 0; i < log.size(); i++)
+        {
+            ImGui::Text(log[i].c_str());
+        }
+    }
+    ImGui::End();
 }
 
 void Gui::showController(bool* p_open)
@@ -428,6 +446,26 @@ void Gui::showPPU(bool* p_open)
     ImGui::End();
 }
 
+void Gui::addToLog()
+{
+    std::string line = bus->cpu.disassemble(bus->cpu.pc, bus->cpu.pc)[bus->cpu.pc];
+
+    if (log.size() > 10000)
+    {
+        log.erase(log.begin());
+        log.push_back(line);
+    }
+    else
+    {
+        log.push_back(line);
+    }
+}
+
+void Gui::resetLog()
+{
+    log.clear();
+}
+
 char* hex(uint32_t n, uint8_t d)
 {
     std::string s(d, '0');
@@ -453,7 +491,7 @@ void Gui::UpdatePalletTexture()
 {
     for (int i = 0; i < palletTexture.size(); i++)
     {
-        rndr::Pixel pixel = bus->ppu.GetColourFromPaletteRam(i);
+        rndr::Pixel pixel = bus->ppu.GetColourFromPaletteRam(1,i);
         void* pixels = nullptr;
         int pitch = 0;
         SDL_LockTexture(palletTexture[i], NULL, &pixels, &pitch);

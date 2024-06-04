@@ -21,6 +21,8 @@ public:
 	int width; 
 	int height;
 	bool singleStep = false;
+	void addToLog();
+	void resetLog();
 	std::map<uint16_t, std::string> disassembler;
 private:
 	void (*eventCallback)(SDL_Event* event);
@@ -42,5 +44,7 @@ private:
 	void showAssembly(bool* p_open, int lines);
 	void showPPU(bool* p_open);
 	void showController(bool* p_open);
+	void showLog(bool* p_open);
+	std::vector<std::string> log;
 };
 

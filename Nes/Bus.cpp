@@ -1,4 +1,5 @@
 #include "Bus.h"
+#include "Gui.h"
 
 Bus::Bus()
 {
@@ -56,13 +57,20 @@ void Bus::reset()
 	nSystemClockCounter = 0;
 }
 
-void Bus::clock()
+void Bus::clock(Gui* gui)
 {
 	ppu.clock();
-	if (nSystemClockCounter % 3 == 0)
-	{
+
+
+	if (nSystemClockCounter % 3 == 0)	{
+		
 		cpu.clock();
+
+
+		if (cpu.complete() && gui != nullptr)
+			gui->addToLog();
 	}
+
 
 	if (ppu.nmi)
 	{

@@ -4,6 +4,9 @@
 #include "Cpu.h"
 #include "Ppu.h"
 #include "Cartrige.h"
+#include "Gui.h"
+
+class Gui;
 
 class Bus
 {
@@ -26,7 +29,7 @@ public: //funkce
 public: //system
 	void insertCartrige(const std::shared_ptr<Cartrige>& cartrige);
 	void reset();
-	void clock();
+	void clock(Gui *gui = nullptr);
 
 private:
 	uint32_t clockCount;

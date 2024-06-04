@@ -109,7 +109,7 @@ void Ppu::clock()
         bg_palette = (bg_pal1 << 1) | bg_pal0;
     }
 
-    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bg_pixel + bg_palette * 16));
+    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bg_palette,bg_pixel));
 
     cycle++;
     if (cycle >= 341)
@@ -250,7 +250,7 @@ rndr::Sprite Ppu::GetPatternTable(uint8_t index)
                     uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
                     tile_lsb >>= 1; 
                     tile_msb >>= 1;
-                    table.SetPixel(xTile * 8 + (7 - xPixel), yTile * 8 + yPixel, GetColourFromPaletteRam(pixel));
+                    table.SetPixel(xTile * 8 + (7 - xPixel), yTile * 8 + yPixel, GetColourFromPaletteRam(0,pixel));
                 }
             }
         }
@@ -258,9 +258,9 @@ rndr::Sprite Ppu::GetPatternTable(uint8_t index)
     return table;
 }
 
-rndr::Pixel Ppu::GetColourFromPaletteRam(uint8_t pixel)
+rndr::Pixel Ppu::GetColourFromPaletteRam(uint8_t palette, uint8_t pixel)
 {
-    return colorPallet[PpuRead(0x3F00 + pixel) & 0x3F];
+    return colorPallet[PpuRead(0x3F00 + (palette << 2) +pixel) & 0x3F];
 }
 
 void Ppu::CpuWrite(uint16_t address, uint8_t data)

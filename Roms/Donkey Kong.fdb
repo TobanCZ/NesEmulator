@@ -1,4 +1,1 @@
-BreakPoint: startAddr=00004902  endAddr=00000000  flags=ER--X-  condition=""  desc="" 
-BreakPoint: startAddr=000048DE  endAddr=00000000  flags=-R--X-  condition=""  desc="" 
-BreakPoint: startAddr=000047F1  endAddr=00000000  flags=ER--X-  condition=""  desc="" 
-BreakPoint: startAddr=000001FC  endAddr=00000000  flags=EC-W--  condition=""  desc="" 
+BreakPoint: startAddr=000047AE  endAddr=00000000  flags=ER--X-  condition=""  desc="" 

@@ -111,7 +111,7 @@ void rndr::Renderer::Init()
     if (renderer == NULL) 
         SDL_Log("Unable to create renderer: %s", SDL_GetError());
 
-    SDL_RenderSetLogicalSize(renderer, nesWidth, nesHeight);
+    SDL_RenderSetLogicalSize(renderer, winWidth, winHeight);
     
     canvas = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, nesWidth, nesHeight);
     if (canvas == NULL)
@@ -169,7 +169,7 @@ void rndr::Renderer::Render()
 
     renderCallback(this);
     SDL_UnlockTexture(canvas);
-    SDL_Rect destRect = { 0, 0, winWidth, winHeight };
+    SDL_Rect destRect = { 0, 0,  winWidth, winHeight};
     SDL_RenderCopy(renderer, canvas, NULL, &destRect);
     guiCallback(isRunning);
     SDL_RenderPresent(renderer);

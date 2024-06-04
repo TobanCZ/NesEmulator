@@ -31,7 +31,7 @@ public:
 	uint8_t PpuRead(uint16_t address);
 
 	rndr::Sprite GetPatternTable(uint8_t index);
-	rndr::Pixel GetColourFromPaletteRam(uint8_t pixel);
+	rndr::Pixel GetColourFromPaletteRam(uint8_t palette, uint8_t pixel);
 
 	union loopy_register
 	{
