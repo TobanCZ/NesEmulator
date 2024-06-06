@@ -260,6 +260,7 @@ rndr::Sprite Ppu::GetPatternTable(uint8_t index)
 
 rndr::Pixel Ppu::GetColourFromPaletteRam(uint8_t palette, uint8_t pixel)
 {
+    if (pixel == 0) palette = 0;
     return colorPallet[PpuRead(0x3F00 + (palette << 2) +pixel) & 0x3F];
 }
 
