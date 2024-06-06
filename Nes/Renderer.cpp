@@ -2,11 +2,15 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#ifdef MAKEFILE
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 #include <vector>
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdlrenderer2.h"
 
 rndr::Pixel::Pixel(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {

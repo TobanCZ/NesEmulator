@@ -1,6 +1,10 @@
 #pragma once
 #include "Renderer.h"
+#ifdef MAKEFILE
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 #include <stdint.h>
 #include <cstdint>
 #include <functional>
