@@ -1,13 +1,16 @@
 #pragma once
+#ifdef MAKEFILE
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#endif
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdlrenderer2.h"
 #include <memory>
 #include "Bus.h"
 #include "Cpu.h"
 #include "Ppu.h"
-#include <wtypes.h>
 
 class Gui
 {
@@ -38,7 +41,7 @@ private:
 	void UpdatePalletTexture();
 	void UpdatePatternTexture();
 private:
-	bool OpenFileDialog(wchar_t* filePath, DWORD filePathSize);
+	bool OpenFileDialog(char* filePath, int filePathSize);
 	void showCPU(bool* p_open);
 	void showRAM(bool* p_open);
 	void showAssembly(bool* p_open, int lines);

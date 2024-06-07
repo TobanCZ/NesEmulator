@@ -3,7 +3,11 @@
 #include "Bus.h"
 #include "Renderer.h"
 #include "Cartrige.h"
+#ifdef MAKEFILE
+#include <SDL2/SDL.h>
+#else
 #include <SDL.h>
+#endif
 #include <string>
 #include <memory>
 #include "Gui.h"
@@ -150,4 +154,10 @@ void guiUpdate(std::shared_ptr<bool> isRunning)
 void clean()
 {
 	gui->Clean();
+}
+
+#undef main
+
+int main(int argc, char** argv) {
+	return SDL_main(argc, argv);
 }

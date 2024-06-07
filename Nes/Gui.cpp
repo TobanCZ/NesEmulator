@@ -1,7 +1,7 @@
 ﻿#include "Gui.h"
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdlrenderer2.h"
 #include <memory>
 #include "Bus.h"
 #include "Cpu.h"
@@ -12,21 +12,16 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <string.h>
-#include <windows.h>
-#include <commdlg.h>
 #include <locale>
 #include <codecvt>
+#include <vector>
+#include "portable_file_dialogs.h"
 
 char* hex(uint32_t n, uint8_t d);
 char* combineChar(char* first, const char* second);
 
 void DrawColoredSquare(ImDrawList* draw_list, const ImVec2& pos, const ImVec2& size, ImU32 color) {
     draw_list->AddRectFilled(pos, ImVec2(pos.x + size.x, pos.y + size.y), color);
-}
-
-std::string WCharToString(const wchar_t* wstr) {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-    return conv.to_bytes(wstr);
 }
 
 
@@ -127,10 +122,10 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
         {
             if (ImGui::MenuItem("Load")) 
             {
-                wchar_t filePath[260];
+                char filePath[260];
 
                 if (OpenFileDialog(filePath, sizeof(filePath) / sizeof(filePath[0]))) {
-                    std::string filePathStr = WCharToString(filePath);
+                    std::string filePathStr = filePath;
                     std::shared_ptr<Cartrige> karta = std::make_shared<Cartrige>(filePathStr);
                     bus->insertCartrige(karta);
                     disassembler = bus->cpu.disassemble(0x0000, 0xFFFF);
@@ -163,27 +158,12 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 }
 
-bool Gui::OpenFileDialog(wchar_t* filePath, DWORD filePathSize) {
-    OPENFILENAMEW ofn;
-    wchar_t szFile[260] = { 0 };
-
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = szFile;
-    ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
-    ofn.lpstrFilter = L"NES Files\0*.nes\0All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = NULL;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    if (GetOpenFileNameW(&ofn) == TRUE) {
-        wcsncpy_s(filePath, filePathSize, ofn.lpstrFile, _TRUNCATE);
-        return true;
-    }
-    return false;
+bool Gui::OpenFileDialog(char* filePath, int filePathSize) {
+    std::vector<std::string> str = pfd::open_file("Open File", "", { "NES Files", "*.nes", "All Files", "*" }, false).result();
+    if (str.empty()) return false;
+    std::string out = str[0];
+    strncpy(filePath, out.c_str(), filePathSize);
+    return true;
 }
 
 void Gui::showLog(bool* p_open)
@@ -472,7 +452,7 @@ char* hex(uint32_t n, uint8_t d)
     for (int i = d - 1; i >= 0; i--, n >>= 4)
         s[i] = "0123456789ABCDEF"[n & 0xF];
     char* result = new char[d + 1]; // Allocate memory for the result
-    strcpy_s(result, d + 1, s.c_str()); // Copy the string content to the allocated memory
+    strncpy(result, s.c_str(), d + 1); // Copy the string content to the allocated memory
     return result;
 };
 
@@ -483,7 +463,7 @@ char* combineChar(char* first, const char* second)
     std::string dva = second;
     std::string s = jedna + dva;
     char* result = new char[len];
-    strcpy_s(result, len+1, s.c_str());
+    strncpy(result, s.c_str(), len+1);
     return result;
 }
 
