@@ -22,7 +22,6 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
     if (fileType == 1)  //https://www.nesdev.org/wiki/INES#iNES_file_format
     {
         PRGbanks = header.PRGsize;
-        if (PRGbanks < 2) PRGbanks = 2;
         mPRG.resize(PRGbanks * 16384);
         ifs.read((char*)mPRG.data(), mPRG.size());
 
