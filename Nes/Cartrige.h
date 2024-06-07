@@ -14,7 +14,6 @@ public:
 	~Cartrige();
 
 
-	bool vertical;
 	bool bImageValid = false;
 
 private:
@@ -41,7 +40,9 @@ private:
 	uint8_t PRGbanks = 0;
 	uint8_t CHRbanks = 0;
 
-	std::shared_ptr<Mapper_000> mapper;
+	std::shared_ptr<Mapper> mapper = 0;
+
+
 
 public:
 	bool CpuWrite(uint16_t address, uint8_t data);
@@ -49,5 +50,9 @@ public:
 
 	bool PpuWrite(uint16_t address, uint8_t data);
 	bool PpuRead(uint16_t address, uint8_t& data);
+
+	void reset();
+	MIRROR Mirror();
+	MIRROR hw_mirror = HORIZONTAL;
 };
 

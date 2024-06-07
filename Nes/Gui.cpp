@@ -216,10 +216,10 @@ void Gui::showController(bool* p_open)
         ImGui::SameLine();
         ImGui::TextColored(bus->controller[0] & 0x04 ? green : red, "DOWN");
  
-        ImGui::TextColored(bus->controller[0] & 0x10 ? green : red, "A (s)");
-        ImGui::TextColored(bus->controller[0] & 0x20 ? green : red, "B (d)");
-        ImGui::TextColored(bus->controller[0] & 0x40 ? green : red, "START (z)");
-        ImGui::TextColored(bus->controller[0] & 0x80 ? green : red, "SELECT (x)");
+        ImGui::TextColored(bus->controller[0] & 0x40 ? green : red, "A (s)");
+        ImGui::TextColored(bus->controller[0] & 0x80 ? green : red, "B (d)");
+        ImGui::TextColored(bus->controller[0] & 0x10 ? green : red, "START (z)");
+        ImGui::TextColored(bus->controller[0] & 0x20 ? green : red, "SELECT (x)");
     }
     ImGui::End();
 }

@@ -7,9 +7,11 @@ public:
 	~Mapper_000();
 
 public:
-	bool CpuWrite(uint16_t address , uint32_t& mapped_address, uint8_t data) override;
-	bool CpuRead(uint16_t address, uint32_t& mapped_address) override;
+	bool CpuWrite(uint16_t address , uint32_t& mapped_address, uint8_t data = 0) override;
+	bool CpuRead(uint16_t address, uint32_t& mapped_address, uint8_t& data) override;
 	bool PpuWrite(uint16_t address, uint32_t& mapped_address) override;
 	bool PpuRead(uint16_t address, uint32_t& mapped_address) override;
+
+	void reset() override;
 };
 

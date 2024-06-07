@@ -35,8 +35,8 @@ int main(int argc, char* argv[])
 	if (!cartige->bImageValid)
 		return 0;
 
-	nes->insertCartrige(cartige);
-	nes->reset();
+	/*nes->insertCartrige(cartige);
+	nes->reset();*/
 
 	rndr::Renderer renderer("NES",1000,800, 256, 240, Update, Render, clean, guiUpdate);
 	gui = std::make_unique<Gui>(renderer.window,renderer.renderer,1000,800, nes.get(), Event, Reset);
@@ -51,19 +51,31 @@ void Reset()
 	nes->reset();
 }
 
+Uint32 lastTime = 0;
+const Uint32 frameTime = 1000 / 60;
+
 void Update(Uint32 elapsed) //main loop
 {
 	nes->controller[0] = 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_d) ? 0x80 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_s) ? 0x40 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_z) ? 0x10 : 0x00;
+	nes->controller[0] |= isKeyPressed(SDLK_x) ? 0x20 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_DOWN) ? 0x04 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_UP) ? 0x08 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_RIGHT) ? 0x01 : 0x00;
 	nes->controller[0] |= isKeyPressed(SDLK_LEFT) ? 0x02 : 0x00;
-	nes->controller[0] |= isKeyPressed(SDLK_d) ? 0x20 : 0x00;
-	nes->controller[0] |= isKeyPressed(SDLK_s) ? 0x10 : 0x00;
-	nes->controller[0] |= isKeyPressed(SDLK_z) ? 0x40 : 0x00;
-	nes->controller[0] |= isKeyPressed(SDLK_x) ? 0x80 : 0x00;
 
+	Uint32 currentTime = SDL_GetTicks();
+	Uint32 deltaTime = currentTime - lastTime;
 
+	if (deltaTime < frameTime) {
+		SDL_Delay(frameTime - deltaTime);
+		return;
+	}
+
+	if (nes->cartrige == nullptr)
+		return;
 
 	if (!gui->singleStep)
 	{
@@ -72,7 +84,7 @@ void Update(Uint32 elapsed) //main loop
 		else
 		{
 
-			fResidualTime += (1.0f / 60.0f) - elapsed;
+			fResidualTime = (60.0 * 1000) + elapsed;
 			do { 
 				nes->clock(); 
 

@@ -25,7 +25,17 @@ void Ppu::clock()
     if (scanline >= -1 && scanline < 240)
     {
         if (scanline == -1 && cycle == 1)
+        {
             status.vertical_blank = 0;
+            status.sprite_overflow = 0;
+            status.sprite_zero_hit = 0;
+
+            for (int i = 0; i < 8; i++)
+            {
+                spriteShifterLow[i] = 0;
+                spriteShifterHigh[i] = 0;
+            }
+        }
 
         if (scanline == 0 && cycle == 0)
             cycle = 1;
@@ -82,6 +92,93 @@ void Ppu::clock()
         if (scanline == -1 && cycle >= 280 && cycle < 305)
             TransferAddressY();
         
+
+
+
+        if (cycle == 257 && scanline >= 0)
+        {
+            std::memset(spritesInScanline, 0xFF, 8 * sizeof(OAMstruct));
+            spritesCount = 0;
+
+            uint8_t nOAMEntry = 0;
+            spriteZHPossible = false;
+            while (nOAMEntry < 64 && spritesCount < 9)
+            {
+                int16_t diff = (int16_t)scanline - (int16_t)OAM[nOAMEntry].y;
+                if (diff >= 0 && diff < (control.sprite_size ? 16 : 8))
+                {
+                    if (spritesCount < 8)
+                    {
+                        if (nOAMEntry == 0)
+                            spriteZHPossible = true;
+
+                        memcpy(&spritesInScanline[spritesCount], &OAM[nOAMEntry], sizeof(OAMstruct));
+                        spritesCount++;
+                    }
+                }
+                nOAMEntry++;
+            }
+            status.sprite_overflow = (spritesCount > 8);
+        }
+
+
+        if (cycle == 340)
+        {
+            for (uint8_t i = 0; i < spritesCount; i++)
+            {
+                uint8_t spritePatternBitsLow;
+                uint8_t spritePatternBitsHigh;
+                uint16_t spritePatternAddressLow;
+                uint16_t spritePatternAddressHigh;
+
+                if (!control.sprite_size) //8x8
+                {
+                    if (!(spritesInScanline[i].attribute & 0x80)) //flip
+                        spritePatternAddressLow = (control.pattern_sprite << 12) | (spritesInScanline[i].id << 4) | (scanline - spritesInScanline[i].y);
+                    else
+                        spritePatternAddressLow = (control.pattern_sprite << 12) | (spritesInScanline[i].id << 4) | (7 - (scanline - spritesInScanline[i].y));
+                    
+                }
+                else //16x8
+                {
+                    if (!(spritesInScanline[i].attribute & 0x80)) //flip
+                    {
+                        if (scanline - spritesInScanline[i].y < 8) //top
+                            spritePatternAddressLow = ((spritesInScanline[i].id & 0x01) << 12) | ((spritesInScanline[i].id & 0xFE) << 4) | ((scanline - spritesInScanline[i].y) & 0x07);
+                        else //bottom
+                            spritePatternAddressLow = ((spritesInScanline[i].id & 0x01) << 12) | (((spritesInScanline[i].id & 0xFE) + 1) << 4) | ((scanline - spritesInScanline[i].y) & 0x07);
+                    }
+                    else
+                    {
+                        if (scanline - spritesInScanline[i].y < 8) //top
+                            spritePatternAddressLow = ((spritesInScanline[i].id & 0x01) << 12) | (((spritesInScanline[i].id & 0xFE) + 1) << 4) | (7 - (scanline - spritesInScanline[i].y) & 0x07);
+                        else //bottom
+                            spritePatternAddressLow = ((spritesInScanline[i].id & 0x01) << 12) | ((spritesInScanline[i].id & 0xFE) << 4) | (7 - (scanline - spritesInScanline[i].y) & 0x07);
+                    }
+                }
+
+                spritePatternAddressHigh = spritePatternAddressLow + 8;
+                spritePatternBitsLow = PpuRead(spritePatternAddressLow);
+                spritePatternBitsHigh = PpuRead(spritePatternAddressHigh);
+
+                if (spritesInScanline[i].attribute & 0x40)
+                {
+                    auto flipbyte = [](uint8_t b)
+                    {
+                        b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+                        b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+                        b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+                        return b;
+                    };
+
+                    spritePatternBitsLow = flipbyte(spritePatternBitsLow);
+                    spritePatternBitsHigh = flipbyte(spritePatternBitsHigh);
+                }
+
+                spriteShifterLow[i] = spritePatternBitsLow;
+                spriteShifterHigh[i] = spritePatternBitsHigh;
+            }
+        }
     }
 
 
@@ -109,7 +206,85 @@ void Ppu::clock()
         bg_palette = (bg_pal1 << 1) | bg_pal0;
     }
 
-    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(bg_palette,bg_pixel));
+    uint8_t fg_pixel = 0x00;
+    uint8_t fg_palette = 0x00;
+    uint8_t fg_priority = 0x00;
+
+    if (mask.render_sprites)
+    {
+        spriteZHBeingRendered = false;
+        for (uint8_t i = 0; i < spritesCount; i++)
+        {
+            if (spritesInScanline[i].x == 0)
+            {
+                uint8_t p0_pixel = (spriteShifterLow[i] & 0x80) > 0;
+                uint8_t p1_pixel = (spriteShifterHigh[i] & 0x80) > 0;
+
+                fg_pixel = (p1_pixel << 1) | p0_pixel;
+                fg_palette = (spritesInScanline[i].attribute & 0x03) + 0x04;
+                fg_priority = (spritesInScanline[i].attribute & 0x20) == 0; 
+
+                if (fg_pixel != 0)
+                {
+                    if(i == 0)
+                        spriteZHBeingRendered = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    uint8_t pixel = 0x00;
+    uint8_t palette = 0x00;
+
+    if (bg_pixel == 0 && fg_pixel == 0)
+    {
+        pixel = 0x00;
+        palette = 0x00;
+    }
+    else if (bg_pixel == 0 && fg_pixel > 0)
+    {
+        pixel = fg_pixel;
+        palette = fg_palette;
+    }
+    else if (bg_pixel > 0 && fg_pixel == 0)
+    {
+        pixel = bg_pixel;
+        palette = bg_palette;
+    }
+    else if (bg_pixel > 0 && fg_pixel > 0)
+    {
+        if (fg_priority)
+        {
+            pixel = fg_pixel;
+            palette = fg_palette;
+        }
+        else
+        {
+            pixel = bg_pixel;
+            palette = bg_palette;
+        }
+
+        if (spriteZHPossible && spriteZHBeingRendered)
+        {
+            if (mask.render_background && mask.render_sprites)
+            {
+                if (~(mask.render_background_left | mask.render_sprites_left))
+                {
+                    if (cycle >= 9 && cycle < 258)
+                        status.sprite_zero_hit = 1;
+                }
+                else
+                {
+                    if (cycle >= 1 && cycle < 258)
+                        status.sprite_zero_hit = 1;
+                }
+            }
+        }
+    }
+
+
+    backgroundCanvas->SetPixel(cycle - 1, scanline, GetColourFromPaletteRam(palette,pixel));
 
     cycle++;
     if (cycle >= 341)
@@ -229,6 +404,22 @@ void Ppu::UpdateShifters()
         bg_shifter_attrib_lo <<= 1;
         bg_shifter_attrib_hi <<= 1;
     }
+
+    if (mask.render_sprites && cycle >= 1 && cycle < 258)
+    {
+        for (uint8_t i = 0; i < spritesCount; i++)
+        {
+            if (spritesInScanline[i].x > 0)
+            {
+                spritesInScanline[i].x--;
+            }
+            else
+            {
+                spriteShifterLow[i] <<= 1;
+                spriteShifterHigh[i] <<= 1;
+            }
+        }
+    }
 }
 
 rndr::Sprite Ppu::GetPatternTable(uint8_t index)
@@ -247,7 +438,7 @@ rndr::Sprite Ppu::GetPatternTable(uint8_t index)
 
                 for (uint16_t xPixel = 0; xPixel < 8; xPixel++)
                 {
-                    uint8_t pixel = (tile_lsb & 0x01) + (tile_msb & 0x01);
+                    uint8_t pixel = ((tile_lsb & 0x01) << 1) | (tile_msb & 0x01);
                     tile_lsb >>= 1; 
                     tile_msb >>= 1;
                     table.SetPixel(xTile * 8 + (7 - xPixel), yTile * 8 + yPixel, GetColourFromPaletteRam(0,pixel));
@@ -278,8 +469,10 @@ void Ppu::CpuWrite(uint16_t address, uint8_t data)
     case 0x0002:
         break;
     case 0x0003:
+        adress_OAM = data;
         break;
     case 0x0004:
+        pOAM[adress_OAM] = data;
         break;
     case 0x0005:
         if (adress_latch == 0)
@@ -322,24 +515,24 @@ uint8_t Ppu::CpuRead(uint16_t address, bool readOnly)
     {
         switch (address)
         {
-        case 0x0000: // Control
+        case 0x0000: 
             data = control.reg;
             break;
-        case 0x0001: // Mask
+        case 0x0001: 
             data = mask.reg;
             break;
-        case 0x0002: // Status
+        case 0x0002: 
             data = status.reg;
             break;
-        case 0x0003: // OAM Address
+        case 0x0003: 
             break;
-        case 0x0004: // OAM Data
+        case 0x0004:
             break;
-        case 0x0005: // Scroll
+        case 0x0005: 
             break;
-        case 0x0006: // PPU Address
+        case 0x0006: 
             break;
-        case 0x0007: // PPU Data
+        case 0x0007: 
             break;
         }
     }
@@ -359,6 +552,7 @@ uint8_t Ppu::CpuRead(uint16_t address, bool readOnly)
         case 0x0003:
             break;
         case 0x0004:
+            data = pOAM[adress_OAM];
             break;
         case 0x0005:
             break;
@@ -390,7 +584,7 @@ void Ppu::PpuWrite(uint16_t address, uint8_t data)
     else if (address >= 0x2000 && address <= 0x3EFF)
     {
         address &= 0x0FFF;
-        if (cartrige->vertical == true)
+        if (cartrige->Mirror() == MIRROR::VERTICAL)
         {
             if (address >= 0x0000 && address <= 0x03FF)
                 name[address & 0x03FF] = data;
@@ -401,7 +595,7 @@ void Ppu::PpuWrite(uint16_t address, uint8_t data)
             if (address >= 0x0C00 && address <= 0x0FFF)
                 name[1024 + (address & 0x03FF)] = data;
         }
-        else
+        else if (cartrige->Mirror() == MIRROR::HORIZONTAL)
         {
             if (address >= 0x0000 && address <= 0x03FF)
                 name[address & 0x03FF] = data;
@@ -439,7 +633,7 @@ uint8_t Ppu::PpuRead(uint16_t address)
     else if (address >= 0x2000 && address <= 0x3EFF)
     {
         address &= 0x0FFF;
-        if (cartrige->vertical == true)
+        if (cartrige->Mirror() == MIRROR::VERTICAL)
         {
             if (address >= 0x0000 && address <= 0x03FF)
                 data = name[address & 0x03FF];
@@ -450,7 +644,7 @@ uint8_t Ppu::PpuRead(uint16_t address)
             if (address >= 0x0C00 && address <= 0x0FFF)
                 data = name[1024 + (address & 0x03FF)];
         }
-        else
+        else if (cartrige->Mirror() == MIRROR::HORIZONTAL)
         {
             if (address >= 0x0000 && address <= 0x03FF)
                 data = name[address & 0x03FF];
