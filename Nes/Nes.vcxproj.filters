@@ -75,6 +75,9 @@
     <ClCompile Include="Gui.cpp">
       <Filter>Zdrojové soubory</Filter>
     </ClCompile>
+    <ClCompile Include="Mapper_001.cpp">
+      <Filter>Zdrojové soubory\Mappers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bus.h">
@@ -87,9 +90,6 @@
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
     <ClInclude Include="Cartrige.h">
-      <Filter>Hlavičkové soubory</Filter>
-    </ClInclude>
-    <ClInclude Include="Mapper.h">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
     <ClInclude Include="Mapper_000.h">
@@ -123,6 +123,12 @@
       <Filter>Hlavičkové soubory\imgui</Filter>
     </ClInclude>
     <ClInclude Include="Gui.h">
+      <Filter>Hlavičkové soubory</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapper_001.h">
+      <Filter>Hlavičkové soubory\Mappers</Filter>
+    </ClInclude>
+    <ClInclude Include="Mapper.h">
       <Filter>Hlavičkové soubory</Filter>
     </ClInclude>
   </ItemGroup>

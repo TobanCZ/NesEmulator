@@ -19,6 +19,12 @@ void Bus::CpuWrite(uint16_t address, uint8_t data)
 		ram[address & 0x07FF] = data;
 	else if (address >= 0x2000 && address <= 0x3FFF)
 		ppu.CpuWrite(address & 0x0007, data);
+	else if (address == 0x4014)
+	{
+		dma_page = data;
+		dma_address = 0x00;
+		dma_transfer = true;
+	}
 	else if (address >= 0x4016 && address <= 0x4017)
 		controller_state[address & 0x0001] = controller[address & 0x0001];
 }
@@ -52,6 +58,7 @@ void Bus::reset()
 {
 	cpu.reset();
 	ppu.Reset();
+	cartrige->reset();
 	ram.fill(0);
 	clockCount = 0;
 	nSystemClockCounter = 0;
@@ -64,11 +71,41 @@ void Bus::clock(Gui* gui)
 
 	if (nSystemClockCounter % 3 == 0)	{
 		
-		cpu.clock();
+		if (dma_transfer)
+		{
+			if (dma_dummy)
+			{
+				if (nSystemClockCounter % 2 == 1)
+				{
+					dma_dummy = false;
+				}
+			}
+			else
+			{
+				if (nSystemClockCounter % 2 == 0)
+				{
+					dma_data = CpuRead(dma_page << 8 | dma_address);
+				}
+				else
+				{
+					ppu.pOAM[dma_address] = dma_data;
+					dma_address++;
 
+					if (dma_address == 0x00)
+					{
+						dma_transfer = false;
+						dma_dummy = true;
+					}
+				}
+			}
+		}
+		else
+		{
+			cpu.clock();
 
-		if (cpu.complete() && gui != nullptr)
-			gui->addToLog();
+			if (cpu.complete() && gui != nullptr)
+				gui->addToLog();
+		}
 	}
 
 

@@ -1,5 +1,6 @@
 #include "Cartrige.h"
 #include <fstream> 
+#include "Mapper_001.h"
 
 Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
 {
@@ -13,10 +14,10 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
             ifs.seekg(512, std::ios_base::cur);
 
         mapperId = (header.mapper2 & 0xF0) | (header.mapper1 >> 4);   //https://www.nesdev.org/wiki/INES#Flags_7
-        vertical = (header.mapper1 & 0x01) ? true : false;
+        hw_mirror = (header.mapper1 & 0x01) ? VERTICAL : HORIZONTAL;
     }
-
     fileType = 1;
+    if ((header.mapper2 & 0x0C) == 0x08) fileType = 2;
 
     if (fileType == 1)  //https://www.nesdev.org/wiki/INES#iNES_file_format
     {
@@ -33,9 +34,21 @@ Cartrige::Cartrige(const std::string path) //https://www.nesdev.org/wiki/INES
         ifs.read((char*)mCHR.data(), mCHR.size());
     }
 
+    if (fileType == 2)
+    {
+        PRGbanks = ((header.PRGRamSize & 0x07) << 8) | header.PRGsize;
+        mPRG.resize(PRGbanks * 16384);
+        ifs.read((char*)mPRG.data(), mPRG.size());
+
+        CHRbanks = ((header.PRGRamSize & 0x38) << 8) | header.CHRsize;
+        mCHR.resize(CHRbanks * 8192);
+        ifs.read((char*)mCHR.data(), mCHR.size());
+    }
+
     switch (mapperId)
     {
     case 0:mapper = std::make_shared<Mapper_000>(PRGbanks, CHRbanks); break;
+    case 1:mapper = std::make_shared<Mapper_001>(PRGbanks, CHRbanks); break;
     }
 
     ifs.close();
@@ -51,7 +64,14 @@ bool Cartrige::CpuWrite(uint16_t address, uint8_t data)
     uint32_t mapped_addr = 0;
     if (mapper->CpuWrite(address, mapped_addr, data))
     {
-        mPRG[mapped_addr] = data;
+        if (mapped_addr == 0xFFFFFFFF)
+        {
+            return true;
+        }
+        else
+        {
+            mPRG[mapped_addr] = data;
+        }
         return true;
     }
     else
@@ -61,9 +81,16 @@ bool Cartrige::CpuWrite(uint16_t address, uint8_t data)
 bool Cartrige::CpuRead(uint16_t address, uint8_t& data)
 {
     uint32_t mapped_addr = 0;
-    if (mapper->CpuRead(address, mapped_addr))
+    if (mapper->CpuRead(address, mapped_addr, data))
     {
-        data = mPRG[mapped_addr];
+        if (mapped_addr == 0xFFFFFFFF)
+        {
+            return true;
+        }
+        else
+        {
+            data = mPRG[mapped_addr];
+        }
         return true;
     }
     else
@@ -91,4 +118,23 @@ bool Cartrige::PpuRead(uint16_t address, uint8_t& data)
     }
     else
         return false;
+}
+
+void Cartrige::reset()
+{
+    if (mapper != nullptr)
+        mapper->reset();
+}
+
+MIRROR Cartrige::Mirror()
+{
+    MIRROR m = mapper->mirror();
+    if (m == MIRROR::HARDWARE)
+    {
+        return hw_mirror;
+    }
+    else
+    {
+        return m;
+    }
 }

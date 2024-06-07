@@ -22,7 +22,7 @@ bool Mapper_000::CpuWrite(uint16_t address, uint32_t& mapped_address, uint8_t da
 	return false;
 }
 
-bool Mapper_000::CpuRead(uint16_t address, uint32_t& mapped_address)
+bool Mapper_000::CpuRead(uint16_t address, uint32_t& mapped_address, uint8_t& data)
 {
 	if (address >= 0x8000 && address <= 0xFFFF)
 	{
@@ -53,4 +53,8 @@ bool Mapper_000::PpuRead(uint16_t address, uint32_t& mapped_address)
 		return true;
 	}
 	return false;
+}
+
+void Mapper_000::reset()
+{
 }

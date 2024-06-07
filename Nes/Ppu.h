@@ -105,6 +105,25 @@ public:
 		uint8_t reg;
 	} control;
 
+	struct OAMstruct
+	{
+		uint8_t y;
+		uint8_t id;
+		uint8_t attribute;
+		uint8_t x;
+	}OAM[64];
+
+	uint8_t* pOAM = (uint8_t*)OAM;
+	uint8_t adress_OAM = 0x00;
+
+	OAMstruct spritesInScanline[8];
+	uint8_t spritesCount = 0x00;
+
+	uint8_t spriteShifterLow[8];
+	uint8_t spriteShifterHigh[8];
+
+	bool spriteZHPossible = false;
+	bool spriteZHBeingRendered = false;
 private:
 	uint8_t adress_latch = 0x00;
 	uint8_t ppu_data_buffer = 0x00;
