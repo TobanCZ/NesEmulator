@@ -159,7 +159,7 @@ void Gui::Render(std::shared_ptr<bool> isRunning)
 }
 
 bool Gui::OpenFileDialog(char* filePath, int filePathSize) {
-    std::vector<std::string> str = pfd::open_file("Open File", "", { "NES Files", "*.nes", "All Files", "*" }, false).result();
+    std::vector<std::string> str = pfd::open_file("Open File", "", { "NES Files", "*.nes", "All Files", "*" }, pfd::opt::none).result();
     if (str.empty()) return false;
     std::string out = str[0];
     strncpy(filePath, out.c_str(), filePathSize);
