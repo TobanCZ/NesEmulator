@@ -1,5 +1,6 @@
 #include "Ppu.h"
 #include <cstdint>
+#include <cstring>
 #include "Cartrige.h"
 #include <memory>
 #include "Renderer.h"
